@@ -3,15 +3,25 @@ import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
 
 const db = new DatabaseSync(path.join(import.meta.dirname ?? "", "../bopper.db"));
-console.log(path.join(import.meta.dirname ?? "", "../bopper.db"));
 
-function read(options: {
+export type readFunction = (options: {
     guildId: Snowflake;
     channelId?: Snowflake;
     userId?: Snowflake;
 
     property: string;
-}): string | undefined {
+}) => string | undefined;
+
+export type writeFunction = (options: {
+    guildId: Snowflake;
+    channelId?: Snowflake;
+    userId?: Snowflake;
+
+    property: string;
+    value: string | number;
+}) => boolean;
+
+export const read: readFunction = function (options) {
     if (!options.property.match(/^[a-zA-Z_]\w+$/)) return undefined;
     db.exec(`CREATE TABLE IF NOT EXISTS ${options.property} ( key TEXT PRIMARY KEY, value TEXT )`);
 
@@ -20,23 +30,22 @@ function read(options: {
     if (result == undefined) return undefined;
     if (result.value == undefined) return undefined;
     return result.value.toString();
-}
+};
 
-function write(options: {
-    guildId: Snowflake;
-    channelId?: Snowflake;
-    userId?: Snowflake;
-
-    property: string;
-    value: string;
-}): boolean {
+export const write: writeFunction = function (options) {
     if (!options.property.match(/^[a-zA-Z_]\w+$/)) return false;
     db.exec(`CREATE TABLE IF NOT EXISTS ${options.property} ( key TEXT PRIMARY KEY, value TEXT )`);
 
     db.prepare(`INSERT OR REPLACE INTO ${options.property} (key, value) VALUES (?,?)`)
-        .run(`${options.guildId}-${options.channelId ?? ""}--${options.userId ?? ""}`, options.value);
+        .run(`${options.guildId}-${options.channelId ?? ""}--${options.userId ?? ""}`, options.value.toString());
 
     return true;
-}
+};
 
-export default { read, write };
+declare global {
+    var database: {
+        read: readFunction;
+        write: writeFunction;
+    };
+}
+globalThis.database = { read, write };

@@ -1,5 +1,6 @@
 import { Client, Events, GatewayIntentBits, Snowflake } from 'npm:discord.js';
-import database from './src/database.ts';
+import './src/database.ts';
+import { updateRep } from './src/rep.ts';
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions],
@@ -7,32 +8,12 @@ const client = new Client({
 
 client.once(Events.ClientReady, readyClient => {
     console.log(`Ready! Logged in as ${readyClient.user.tag}`);
-    writeDB({
-        guildId: "test" as Snowflake,
-        property: "rep",
-        value: "valueyay"
-    });
-
-    console.log(readDB({
-        guildId: "test" as Snowflake,
-        property: "test"
-    }));
 });
 
 client.on(Events.MessageCreate, message => {
-    if (!message.guildId) return;
-
-
-    writeDB({
-        guildId: message.guildId,
-
-    });
-
-    // if (!database.rep[message.guildId]) database.rep[message.guildId] = {};
-    // if (!database.rep[message.guildId][message.author.id]) database.rep[message.guildId][message.author.id] = 0;
-    // database.rep[message.guildId][message.author.id] += 1;
-
-    // console.log(database.rep[message.guildId][message.author.id]);
+    if (!message.guildId || message.author.bot || message.author.system) return;
+    updateRep(message.guildId, message.author.id, +1);
+    // console.log("new rep:", updateRep(message.guildId, message.author.id, +1));
 });
 
 client.login(Deno.env.get("DISCORD_TOKEN"));
