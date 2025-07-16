@@ -1,0 +1,1 @@
+import { Client, Events, GatewayIntentBits } from 'npm:discord.js';
