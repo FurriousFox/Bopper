@@ -8,14 +8,21 @@ export type readFunction = (options: {
     guildId: Snowflake;
     channelId?: Snowflake;
     userId?: Snowflake;
+    messageId?: Snowflake;
 
     property: string;
 }) => string | undefined;
+export type readAllFunction = (options: {
+    like: string;
+
+    property: string;
+}) => { key: string, value: string; }[];
 
 export type writeFunction = (options: {
     guildId: Snowflake;
     channelId?: Snowflake;
     userId?: Snowflake;
+    messageId?: Snowflake;
 
     property: string;
     value: string | number;
@@ -26,10 +33,20 @@ export const read: readFunction = function (options) {
     db.exec(`CREATE TABLE IF NOT EXISTS ${options.property} ( key TEXT PRIMARY KEY, value TEXT )`);
 
     const query = db.prepare(`SELECT value FROM ${options.property} WHERE key=?`);
-    const result = query.get(`${options.guildId}-${options.channelId ?? ""}--${options.userId ?? ""}`);
+    const result = query.get(`${options.guildId}A${options.channelId ?? ""}--${options.userId ?? ""}${options.messageId ? `C${options.messageId}` : ""}`);
     if (result == undefined) return undefined;
     if (result.value == undefined) return undefined;
     return result.value.toString();
+};
+
+export const readAll: readAllFunction = function (options) {
+    if (!options.property.match(/^[a-zA-Z_]\w+$/)) return [];
+    db.exec(`CREATE TABLE IF NOT EXISTS ${options.property} ( key TEXT PRIMARY KEY, value TEXT )`);
+
+    const query = db.prepare(`SELECT * FROM ${options.property} WHERE key LIKE ?`);
+    const result = query.all(`%${options.like}%`);
+    if (result == undefined) return [];
+    return result as { key: string, value: string; }[];
 };
 
 export const write: writeFunction = function (options) {
@@ -37,7 +54,7 @@ export const write: writeFunction = function (options) {
     db.exec(`CREATE TABLE IF NOT EXISTS ${options.property} ( key TEXT PRIMARY KEY, value TEXT )`);
 
     db.prepare(`INSERT OR REPLACE INTO ${options.property} (key, value) VALUES (?,?)`)
-        .run(`${options.guildId}-${options.channelId ?? ""}--${options.userId ?? ""}`, options.value.toString());
+        .run(`${options.guildId}A${options.channelId ?? ""}--${options.userId ?? ""}${options.messageId ? `C${options.messageId}` : ""}`, options.value.toString());
 
     return true;
 };
@@ -45,7 +62,8 @@ export const write: writeFunction = function (options) {
 declare global {
     var database: {
         read: readFunction;
+        readAll: readAllFunction;
         write: writeFunction;
     };
 }
-globalThis.database = { read, write };
+globalThis.database = { read, write, readAll };

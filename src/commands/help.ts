@@ -1,5 +1,5 @@
 import path from "node:path";
-import { OmitPartialGroupDMChannel, Message } from 'npm:discord.js';
+import { Message } from 'npm:discord.js';
 const commands: {
     command: string,
     examples: string[],
@@ -17,7 +17,7 @@ export default {
     command: 'help',
     examples: [],
     description: 'list all commands',
-    handler(message: OmitPartialGroupDMChannel<Message<boolean>>, match: RegExpMatchArray): void {
+    handler(message: Message): void {
 
         const prefix = database.read({
             guildId: message.guildId!,
@@ -25,7 +25,7 @@ export default {
         }) ?? ".";
 
         const commands_text = commands.map(command => {
-            return `**${prefix}${command.command}**: ${command.description}${command.examples.length ? ` (\`${command.examples.join("\`, \`")}\`)` : ""}`;
+            return `**${prefix}${command.command}**: ${command.description}${command.examples.length ? ` (\`${prefix}${command.examples.join(`\`, \`${prefix}`)}\`)` : ""}`;
         }).join('\n');
 
         message.reply({ content: commands_text, allowedMentions: {} });

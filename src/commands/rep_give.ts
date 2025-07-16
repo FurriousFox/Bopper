@@ -1,4 +1,4 @@
-import { OmitPartialGroupDMChannel, Message } from 'npm:discord.js';
+import { Message } from 'npm:discord.js';
 import { getRep, updateRep } from '../rep.ts';
 
 export default {
@@ -6,14 +6,14 @@ export default {
     command: 'rep give <user> <amount>',
     examples: ['rep give @Bopper 10'],
     description: 'gift rep points to someone else',
-    handler(message: OmitPartialGroupDMChannel<Message<boolean>>, match: RegExpMatchArray): void {
+    handler(message: Message, match: RegExpMatchArray): void {
         let lowrep: number;
         if ((lowrep = getRep(message.guildId!, message.author.id)) < parseInt(match[2])) {
             message.reply({ content: `You only have ${lowrep} rep points!`, allowedMentions: {} });
         } else {
             updateRep(message.guildId!, message.author.id, -parseInt(match[2]));
             updateRep(message.guildId!, match[1], parseInt(match[2]));
-            message.reply({ content: `Gifted ${match[2]} rep points to <@${match[1]}>!`, allowedMentions: { users: [match[1]] } });
+            message.reply({ content: `Gifted ${match[2]} rep ${match[2] === "1" ? "point" : "points"} to <@${match[1]}>!`, allowedMentions: { users: [match[1]] } });
         }
     }
 };
