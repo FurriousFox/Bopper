@@ -8,7 +8,7 @@ const commands: {
     command: string,
     examples: string[],
     description: string,
-    handler: (message: Message, match?: RegExpMatchArray) => void;
+    handler: (message: Message, match?: RegExpMatchArray) => void | Promise<void>;
 }[] = [];
 
 for (const { name: command } of Deno.readDirSync(path.join(import.meta.dirname ?? "", "./commands")).filter(e => e.isFile)) {
@@ -55,6 +55,6 @@ export async function handleMessage(message: Message | PartialMessage, botPrefix
         value: 1
     });
     for (const { command: { handler }, match } of handlers) {
-        handler(message, match!);
+        await handler(message, match!);
     }
 };
