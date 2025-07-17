@@ -1,13 +1,15 @@
 import { updateRep } from './rep.ts';
 import path from "node:path";
-import { Message, PartialMessage } from "npm:discord.js";
+import { Message, PartialMessage, SlashCommandBuilder, Interaction, ChatInputCommandInteraction } from "npm:discord.js";
 
 const commands: {
-    match: RegExp,
-    command: string,
-    examples: string[],
-    description: string,
+    match: RegExp;
+    command: string;
+    examples: string[];
+    description: string;
+    slash?: SlashCommandBuilder;
     handler: (message: Message, match?: RegExpMatchArray) => void | Promise<void>;
+    interactionHandler?: (interaction: ChatInputCommandInteraction, match?: RegExpMatchArray) => void | Promise<void>;
 }[] = [];
 
 for (const { name: command } of Deno.readDirSync(path.join(import.meta.dirname ?? "", "./commands")).filter(e => e.isFile)) {
@@ -73,3 +75,17 @@ export async function handleMessage(message: Message | PartialMessage, botPrefix
         await handler(message, match!);
     }
 };
+
+export async function handleInteraction(interaction: Interaction) {
+    if (interaction instanceof ChatInputCommandInteraction) { // slash command
+        /*
+            group dm / generic dms / dms with the bot: guildId == null
+            guild: guildId !== null
+        */
+
+        console.log(interaction.guildId, interaction.user.id);
+
+        await commands.find(command => command.slash?.name == interaction.commandName)?.interactionHandler?.(interaction);
+    }
+
+}

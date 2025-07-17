@@ -1,8 +1,9 @@
-import { Client, Events, GatewayIntentBits, Partials, Snowflake as _Snowflake } from 'npm:discord.js';
+import { Client, Events, GatewayIntentBits, Partials, Snowflake as _Snowflake, SlashCommandBuilder, Routes } from 'npm:discord.js';
 import './src/database.ts';
-import { handleMessage } from "./src/handle.ts";
+import { handleMessage, handleInteraction } from "./src/handle.ts";
 import { updateLapos } from './src/lapo.ts';
 import process from "node:process";
+import path from "node:path";
 
 process.on("uncaughtException", console.error);
 process.on("unhandledRejection", console.error);
@@ -13,11 +14,36 @@ const client = new Client({
 });
 
 let botPrefix: undefined | string;
-client.once(Events.ClientReady, readyClient => {
+client.once(Events.ClientReady, async readyClient => {
     console.log(`Ready! Logged in as ${readyClient.user.tag}`);
     botPrefix = `<@${readyClient.user.id}>`;
 
     lapoTimeout();
+
+    const commands: SlashCommandBuilder[] = [];
+    for (const { name: command } of Deno.readDirSync(path.join(import.meta.dirname ?? "", "./src/commands")).filter(e => e.isFile)) {
+        const slash = (await import(path.join(import.meta.dirname ?? "", "./src/commands/", command))).default.slash;
+        if (slash) commands.push(slash);
+    }
+
+    const commandHash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(commands.map(e => e.toJSON())))))).map((b) => b.toString(16).padStart(2, "0")).join("");
+
+    if (database.read({
+        guildId: "-1",
+        property: "commandsHash"
+    }) == commandHash) return;
+    else {
+        database.write({
+            guildId: "-1",
+            property: "commandsHash",
+            value: commandHash
+        });
+
+        console.log("updating application commands...");
+        client.rest.put(Routes.applicationCommands(readyClient.user.id), { body: commands.map(e => e.toJSON()) }).then(() => {
+            console.log('updated application commands!');
+        }).catch(console.error);
+    }
 });
 
 function lapoTimeout() {
@@ -56,5 +82,6 @@ function lapoTimeout() {
 
 client.on(Events.MessageCreate, message => handleMessage(message, botPrefix));
 client.on(Events.MessageUpdate, (_oldMessage, message) => handleMessage(message, botPrefix, false));
+client.on(Events.InteractionCreate, interaction => handleInteraction(interaction));
 
 client.login(Deno.env.get("DISCORD_TOKEN"));
