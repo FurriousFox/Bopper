@@ -36,6 +36,33 @@ export async function handleMessage(message: Message | PartialMessage, botPrefix
         property: "handled",
     }) !== undefined) return;
 
+    // streak update [first, last]
+    const streak = (database.read({
+        guildId: message.guildId,
+        userId: message.author.id,
+        property: "streak",
+    }) ?? "0-0").split("-").map(e => parseInt(e));
+    if (((+new Date()) - streak[1]) < 48 * 3600 * 1000) {
+        console.log(`last message was ${((+new Date()) - streak[1])}ms ago`);
+
+        database.write({
+            guildId: message.guildId,
+            userId: message.author.id,
+            property: "streak",
+            value: `${streak[0]}-${+new Date()}`
+        });
+    } else {
+        database.write({
+            guildId: message.guildId,
+            userId: message.author.id,
+            property: "streak",
+            value: `${+new Date()}-${+new Date()}`
+        });
+    }
+
+
+
+
     const prefix = database.read({
         guildId: message.guildId!,
         property: "prefix",

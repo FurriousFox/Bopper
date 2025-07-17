@@ -1,4 +1,4 @@
-import { Message, SnowflakeUtil } from 'npm:discord.js';
+import { Message } from 'npm:discord.js';
 
 function getChunk(text: string, maxLen: number = 1900): { chunk: string, remainder: string; } {
     if (text.length <= maxLen) return { chunk: text, remainder: '' };
