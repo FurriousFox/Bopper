@@ -20,7 +20,7 @@ export default {
             return [e[0], b];
         });
 
-        const leaderboard = `## Streak stats\n${streaks.sort((a, b) => (+b[1]) - (+a[1])).filter(e => members.get(e[0] as string)?.user?.bot === false).map(e => `<@${e[0]}>: ${e[1]} ${e[1] == 1 ? 'day' : 'days'}`).join("\n")}`;
+        const leaderboard = `## Streak stats\n${streaks.sort((a, b) => (+b[1]) - (+a[1])).filter(e => members.get(e[0] as string)?.user?.bot === false).map(e => `<@${e[0]}>: ${e[1]} ${e[1] == 1 ? 'day' : 'days'}`).join("\n")}\n\n-# maintain your streak by sending a message every day`;
         message.reply({ content: leaderboard, allowedMentions: {} });
     }
 };
