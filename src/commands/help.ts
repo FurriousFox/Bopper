@@ -18,7 +18,6 @@ export default {
     examples: [],
     description: 'list all commands',
     handler(message: Message): void {
-
         const prefix = database.read({
             guildId: message.guildId!,
             property: "prefix",

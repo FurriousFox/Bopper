@@ -2,6 +2,10 @@ import { Client, Events, GatewayIntentBits, Partials, Snowflake as _Snowflake } 
 import './src/database.ts';
 import { handleMessage } from "./src/handle.ts";
 import { updateLapos } from './src/lapo.ts';
+import process from "node:process";
+
+process.on("uncaughtException", console.error);
+process.on("unhandledRejection", console.error);
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions],
@@ -21,9 +25,9 @@ function lapoTimeout() {
     tomorrow.setDate((new Date()).getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
     const msTillNextDay = Math.floor((tomorrow.getTime() - (new Date()).getTime()));
-    console.log(`Seconds until next local day: ${msTillNextDay / 3600000}`);
-
     setTimeout(() => {
+        lapoTimeout();
+
         const yesterdate = `${new Date(+new Date() - 5000).getDate()}D${new Date(+new Date() - 5000).getFullYear()}D${new Date(+new Date() - 5000).getMonth()}`;
         const lapos = database.readAll({
             like: `A`,
@@ -39,9 +43,11 @@ function lapoTimeout() {
             const channelId = laporesults[serverId][0];
             const userId = laporesults[serverId][1];
 
-            client.channels.fetch(channelId).then(channel => {
-                if (channel && 'send' in channel) channel.send(`W00t <@${userId}>!`).catch(console.error);
-            }).catch(() => { });
+            try {
+                client.channels.fetch(channelId).then(channel => {
+                    if (channel && 'send' in channel) channel.send(`W00t <@${userId}>!`).catch(console.error);
+                }).catch(() => { });
+            } catch (_e) { /*  */ }
 
             updateLapos(serverId, userId);
         }
