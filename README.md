@@ -4,11 +4,21 @@ a Discord bot to boost engagement, keeping the community active
 
 ## Features
 
-- reputation (you gain 1 rep / message)
+- reputation (you gain 1 rep point / message, it's also possible to gift rep points to other users)
+- rep leaderboard
+- 8ball
+- ai answers
+- lapo (last post of the day)
+- lapo leaderboard
+- ping (showing user latency and bot ping)
+- changing command prefix (`.` by default)
+- streak (send a message every day to keep up your streak)
+- streak leaderboard
 
 ## Inviting
 
 Add the bot to your own server by using [this link](https://discord.com/oauth2/authorize?client_id=1395103292899590337)
+Use the `.help` command to get started
 
 ## Running yourself
 
