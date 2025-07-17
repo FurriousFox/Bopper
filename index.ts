@@ -1,24 +1,7 @@
 import { Client, Events, GatewayIntentBits, Partials, Snowflake as _Snowflake } from 'npm:discord.js';
 import './src/database.ts';
-import { watchFile } from "node:fs";
 import { handleMessage } from "./src/handle.ts";
 import { updateLapos } from './src/lapo.ts';
-
-watchFile(import.meta.filename ?? "index.ts", {
-    interval: 100,
-}, () => {
-    Deno.exit(0);
-});
-watchFile("./src/database.ts", {
-    interval: 100,
-}, () => {
-    Deno.exit(0);
-});
-watchFile("./src/handle.ts", {
-    interval: 100,
-}, () => {
-    Deno.exit(0);
-});
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions],
@@ -52,8 +35,6 @@ function lapoTimeout() {
             laporesults[lapo.key.split("A")[0]] = [lapo.key.split("A")[1].split("--")[0], lapo.key.split("--")[1]];
         }
 
-        console.log(laporesults);
-
         for (const serverId of Object.keys(laporesults)) {
             const channelId = laporesults[serverId][0];
             const userId = laporesults[serverId][1];
@@ -64,7 +45,7 @@ function lapoTimeout() {
 
             updateLapos(serverId, userId);
         }
-    }, /* msTillNextDay +  */ 10000);
+    }, msTillNextDay + 1000);
 }
 
 client.on(Events.MessageCreate, message => handleMessage(message, botPrefix));

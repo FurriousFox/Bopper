@@ -1,7 +1,6 @@
 import { updateRep } from './rep.ts';
 import path from "node:path";
 import { Message, PartialMessage } from "npm:discord.js";
-import { watchFile } from "node:fs";
 
 const commands: {
     match: RegExp,
@@ -13,12 +12,6 @@ const commands: {
 
 for (const { name: command } of Deno.readDirSync(path.join(import.meta.dirname ?? "", "./commands")).filter(e => e.isFile)) {
     commands.push((await import(path.join(import.meta.dirname ?? "", "./commands/", command))).default);
-
-    watchFile(path.join(import.meta.dirname ?? "", "./commands/", command), {
-        interval: 100,
-    }, () => {
-        Deno.exit(0);
-    });
 }
 
 
