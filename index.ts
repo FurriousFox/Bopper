@@ -2,6 +2,7 @@ import { Client, Events, GatewayIntentBits, Partials, Snowflake as _Snowflake } 
 import './src/database.ts';
 import { watchFile } from "node:fs";
 import { handleMessage } from "./src/handle.ts";
+import { updateLapos } from './src/lapo.ts';
 
 watchFile(import.meta.filename ?? "index.ts", {
     interval: 100,
@@ -28,7 +29,43 @@ let botPrefix: undefined | string;
 client.once(Events.ClientReady, readyClient => {
     console.log(`Ready! Logged in as ${readyClient.user.tag}`);
     botPrefix = `<@${readyClient.user.id}>`;
+
+    lapoTimeout();
 });
+
+function lapoTimeout() {
+    const tomorrow = new Date(new Date());
+    tomorrow.setDate((new Date()).getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    const msTillNextDay = Math.floor((tomorrow.getTime() - (new Date()).getTime()));
+    console.log(`Seconds until next local day: ${msTillNextDay / 3600000}`);
+
+    setTimeout(() => {
+        const yesterdate = `${new Date(+new Date() - 5000).getDate()}D${new Date(+new Date() - 5000).getFullYear()}D${new Date(+new Date() - 5000).getMonth()}`;
+        const lapos = database.readAll({
+            like: `A`,
+            property: `lapo${yesterdate}`,
+        }).sort((a, b) => +(a.value) - +(b.value));
+
+        const laporesults: Record<string, string[]> = {};
+        for (const lapo of lapos) {
+            laporesults[lapo.key.split("A")[0]] = [lapo.key.split("A")[1].split("--")[0], lapo.key.split("--")[1]];
+        }
+
+        console.log(laporesults);
+
+        for (const serverId of Object.keys(laporesults)) {
+            const channelId = laporesults[serverId][0];
+            const userId = laporesults[serverId][1];
+
+            client.channels.fetch(channelId).then(channel => {
+                if (channel && 'send' in channel) channel.send(`W00t <@${userId}>!`).catch(console.error);
+            }).catch(() => { });
+
+            updateLapos(serverId, userId);
+        }
+    }, /* msTillNextDay +  */ 10000);
+}
 
 client.on(Events.MessageCreate, message => handleMessage(message, botPrefix));
 client.on(Events.MessageUpdate, (_oldMessage, message) => handleMessage(message, botPrefix, false));

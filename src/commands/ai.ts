@@ -11,8 +11,8 @@ function getChunk(text: string, maxLen: number = 1900): { chunk: string, remaind
 
 export default {
     match: /^ai (.+)$/,
-    command: 'ai',
-    examples: [],
+    command: 'ai <question>',
+    examples: ["ai Is the sky blue?"],
     description: 'ask ai something',
     async handler(message: Message, match: RegExpMatchArray): Promise<void> {
         let answer = "";
@@ -34,7 +34,7 @@ export default {
         const reader = res.body.getReader();
         const decoder = new TextDecoder('utf-8');
 
-        let reply = await message.reply({ content: "## AI response:\n\n``", allowedMentions: {} });
+        let reply = await message.reply({ content: "## AI response:\n\n‎", allowedMentions: {} });
 
         let last = +new Date();
         let g = false;
