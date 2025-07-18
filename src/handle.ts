@@ -1,6 +1,6 @@
 import { updateRep } from './rep.ts';
 import path from "node:path";
-import { Message, PartialMessage, SlashCommandBuilder, Interaction, ChatInputCommandInteraction } from "npm:discord.js";
+import { Message, PartialMessage, SlashCommandBuilder, Interaction, ChatInputCommandInteraction, ContextMenuCommandBuilder, MessageContextMenuCommandInteraction } from "npm:discord.js";
 
 const commands: {
     match: RegExp;
@@ -8,8 +8,9 @@ const commands: {
     examples: string[];
     description: string;
     slash?: SlashCommandBuilder;
+    context?: ContextMenuCommandBuilder;
     handler: (message: Message, match?: RegExpMatchArray) => void | Promise<void>;
-    interactionHandler?: (interaction: ChatInputCommandInteraction, match?: RegExpMatchArray) => void | Promise<void>;
+    interactionHandler?: (interaction: ChatInputCommandInteraction | MessageContextMenuCommandInteraction, match?: RegExpMatchArray) => void | Promise<void>;
 }[] = [];
 
 for (const { name: command } of Deno.readDirSync(path.join(import.meta.dirname ?? "", "./commands")).filter(e => e.isFile)) {
@@ -83,9 +84,9 @@ export async function handleInteraction(interaction: Interaction) {
             guild: guildId !== null
         */
 
-        console.log(interaction.guildId, interaction.user.id);
-
         await commands.find(command => command.slash?.name == interaction.commandName)?.interactionHandler?.(interaction);
+    } else if (interaction instanceof MessageContextMenuCommandInteraction) {
+        await commands.find(command => command.context?.name == interaction.commandName)?.interactionHandler?.(interaction);
     }
 
 }

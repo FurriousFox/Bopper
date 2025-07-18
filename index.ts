@@ -1,4 +1,4 @@
-import { Client, Events, GatewayIntentBits, Partials, Snowflake as _Snowflake, SlashCommandBuilder, Routes } from 'npm:discord.js';
+import { Client, Events, GatewayIntentBits, Partials, Snowflake as _Snowflake, SlashCommandBuilder, Routes, ContextMenuCommandBuilder } from 'npm:discord.js';
 import './src/database.ts';
 import { handleMessage, handleInteraction } from "./src/handle.ts";
 import { updateLapos } from './src/lapo.ts';
@@ -20,10 +20,11 @@ client.once(Events.ClientReady, async readyClient => {
 
     lapoTimeout();
 
-    const commands: SlashCommandBuilder[] = [];
+    const commands: (SlashCommandBuilder | ContextMenuCommandBuilder)[] = [];
     for (const { name: command } of Deno.readDirSync(path.join(import.meta.dirname ?? "", "./src/commands")).filter(e => e.isFile)) {
-        const slash = (await import(path.join(import.meta.dirname ?? "", "./src/commands/", command))).default.slash;
-        if (slash) commands.push(slash);
+        const command_import = (await import(path.join(import.meta.dirname ?? "", "./src/commands/", command))).default;
+        if (command_import.slash) commands.push(command_import.slash);
+        if (command_import.context) commands.push(command_import.context);
     }
 
     const commandHash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(commands.map(e => e.toJSON())))))).map((b) => b.toString(16).padStart(2, "0")).join("");
