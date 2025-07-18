@@ -1,11 +1,11 @@
-import { Message, SnowflakeUtil, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction } from 'npm:discord.js';
+import { Message, SnowflakeUtil, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, MessageFlags } from 'npm:discord.js';
 
 export default {
     match: /^ping|pong$/,
     command: 'ping',
     examples: [],
     description: 'check bot ping and your latency',
-    slash: new SlashCommandBuilder().setName("ping").setDescription('check bot ping and your latency').setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel]),
+    slash: new SlashCommandBuilder().setName("ping").setDescription('Check bot ping and your latency').addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message")).setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel]),
     handler(message: Message): void {
         let response = '';
         const nonce = message.nonce ? SnowflakeUtil.timestampFrom(message.nonce.toString()) : undefined;
@@ -21,12 +21,18 @@ export default {
         message.reply({ content: response, allowedMentions: {} });
     },
     async interactionHandler(interaction: ChatInputCommandInteraction) {
+        let response = '';
         const id = SnowflakeUtil.timestampFrom(interaction.id);
         const now = +new Date();
-        await interaction.reply({ content: `ping: ${Math.round((now - id))}ms\n\n-# ping: time between discord receiving your message, and the message being received by the bot`, allowedMentions: {} });
-        const reply = await interaction.fetchReply();
-        if (reply.nonce) { // fsr, the nonce of the reply is equal to the nonce of the interaction request, but hey, I'll take it
-            interaction.editReply({ content: `latency:   ${Math.round((id - SnowflakeUtil.timestampFrom(reply.nonce.toString())))}ms\nping:         ${Math.round((now - id))}ms\n\n-# latency: time between you sending your message, and the message being received by discord\n-# ping: time between discord receiving your message, and the message being received by the bot`, allowedMentions: {} });
-        }
+        const ephemeral = !!interaction.options.getBoolean("ephemeral");
+        const reply = await interaction.deferReply({ withResponse: true, flags: ephemeral ? MessageFlags.Ephemeral : undefined });
+        const nonce = reply.resource?.message?.nonce ? SnowflakeUtil.timestampFrom(reply.resource.message.nonce.toString()) : undefined;
+
+        if (nonce) response += `latency:   ${Math.round((id - nonce))}ms`;
+        response += `\nping: ${nonce ? "        " : ""}${Math.round((now - id))}ms\n`;
+        if (nonce) response += "\n-# latency: time between you sending your message, and the message being received by discord";
+        response += "\n-# ping: time between discord receiving your message, and the message being received by the bot";
+
+        interaction.editReply({ content: response, allowedMentions: {} });
     }
 };
