@@ -1,5 +1,5 @@
 import path from "node:path";
-import { Message } from 'npm:discord.js';
+import { Message, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, MessageFlags } from 'npm:discord.js';
 const commands: {
     command: string,
     examples: string[],
@@ -17,16 +17,22 @@ export default {
     command: 'help',
     examples: [],
     description: 'list all commands',
-    handler(message: Message): void {
-        const prefix = database.read({
+    slash: new SlashCommandBuilder().setName("help").setDescription('List all commands').addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message")).setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel]),
+    handler(message: Message | ChatInputCommandInteraction): void {
+        const prefix = message instanceof ChatInputCommandInteraction ? '/' : database.read({
             guildId: message.guildId!,
             property: "prefix",
         }) ?? ".";
+        const ephemeral = message instanceof ChatInputCommandInteraction ? !!message.options.getBoolean("ephemeral") : false;
 
         const commands_text = commands.map(command => {
             return `**${prefix}${command.command}**: ${command.description}${command.examples.length ? ` (\`${prefix}${command.examples.join(`\`, \`${prefix}`)}\`)` : ""}`;
         }).join('\n');
 
-        message.reply({ content: commands_text, allowedMentions: {} });
+        if (ephemeral) (message as ChatInputCommandInteraction).reply({ content: commands_text, allowedMentions: {}, flags: MessageFlags.Ephemeral });
+        else message.reply({ content: commands_text, allowedMentions: {} });
+    },
+    interactionHandler(interaction: ChatInputCommandInteraction) {
+        this.handler(interaction);
     }
 };
