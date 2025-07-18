@@ -24,7 +24,7 @@ Use the `.help` command to get started
 
 ## Running yourself
 
-1. create an app (scopes: `applications.commands, bot`, permissions: `Add Reactions, Send Messages, Send Messages in Threads, Use External Emojis, Use Slash Commands, View Channels`) and get a token from [https://discord.com/developers/applications/](https://discord.com/developers/applications/)
+1. create an app (scopes: `applications.commands, bot`) and get a token from [https://discord.com/developers/applications/](https://discord.com/developers/applications/)
 2. modify `example.env` with your token and rename it to `.env`
 3. run the bot (requires Deno to be installed)
 
