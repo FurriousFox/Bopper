@@ -26,6 +26,7 @@ export default {
         const ephemeral = message instanceof ChatInputCommandInteraction ? !!message.options.getBoolean("ephemeral") : false;
 
         const commands_text = commands.map(command => {
+            if (prefix == `\``) return `**${prefix.replace("`", "\\`")}${command.command}**: ${command.description}${command.examples.length ? ` (\`\`${prefix.replace("`", " \`")}${command.examples.join(`\`\`, \`\`${prefix.replace("`", " \`")}`)}\`\`)` : ""}`;
             return `**${prefix}${command.command}**: ${command.description}${command.examples.length ? ` (\`${prefix}${command.examples.join(`\`, \`${prefix}`)}\`)` : ""}`;
         }).join('\n');
 

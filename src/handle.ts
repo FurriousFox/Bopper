@@ -1,6 +1,7 @@
 import { updateRep } from './rep.ts';
 import path from "node:path";
-import { Message, PartialMessage, SlashCommandBuilder, Interaction, ChatInputCommandInteraction, ContextMenuCommandBuilder, MessageContextMenuCommandInteraction } from "npm:discord.js";
+import { Message, PartialMessage, SlashCommandBuilder, Interaction, ChatInputCommandInteraction, ContextMenuCommandBuilder, MessageContextMenuCommandInteraction, ButtonInteraction } from "npm:discord.js";
+import { invite } from './add.ts';
 
 const commands: {
     match: RegExp;
@@ -77,16 +78,17 @@ export async function handleMessage(message: Message | PartialMessage, botPrefix
     }
 };
 
-export async function handleInteraction(interaction: Interaction) {
+export function handleInteraction(interaction: Interaction) {
     if (interaction instanceof ChatInputCommandInteraction) { // slash command
         /*
             group dm / generic dms / dms with the bot: guildId == null
             guild: guildId !== null
         */
 
-        await commands.find(command => command.slash?.name == interaction.commandName)?.interactionHandler?.(interaction);
+        commands.find(command => command.slash?.name == interaction.commandName)?.interactionHandler?.(interaction);
     } else if (interaction instanceof MessageContextMenuCommandInteraction) {
-        await commands.find(command => command.context?.name == interaction.commandName)?.interactionHandler?.(interaction);
+        commands.find(command => command.context?.name == interaction.commandName)?.interactionHandler?.(interaction);
+    } else if (interaction instanceof ButtonInteraction) {
+        if (interaction.customId == "public_add") invite(interaction);
     }
-
 }
