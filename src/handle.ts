@@ -64,7 +64,7 @@ export async function handleMessage(message: Message | PartialMessage, botPrefix
         if (botPrefix !== undefined) if (message.content.startsWith(botPrefix)) message.content = message.content.substring(botPrefix.length + +(message.content[botPrefix.length] == " ")); else return;
     } else message.content = message.content.substring(1);
 
-    const handlers = commands.map(command => { return { command: command, match: message.content.match(command.match) }; }).filter(e => e.match !== null);
+    const handlers = commands.map(command => { return { command: command, match: message.content.match(command.match.ignoreCase ? command.match : new RegExp(command.match, `${command.match.flags}i` )) }; }).filter(e => e.match !== null);
     if (handlers.length > 0) database.write({
         guildId: message.guildId,
         channelId: message.channelId,
