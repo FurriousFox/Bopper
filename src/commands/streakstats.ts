@@ -15,7 +15,7 @@ export default {
             const a = new Date(+e);
             a.setHours(0, 0, 0, 0);
             return +a;
-        })]).map(e => {
+        })]).filter(e => ((+new Date()) - +e[1][1]) < 48 * 3600 * 1000).map(e => {
             const b = Math.round((+e[1][1] - +e[1][0]) / (1000 * 24 * 3600)) + 1;
             return [e[0], b];
         });
