@@ -63,7 +63,7 @@ function lapoTimeout() {
 
         const laporesults: Record<string, string[]> = {};
         for (const lapo of lapos) {
-            laporesults[lapo.key.split("A")[0]] = [lapo.key.split("A")[1].split("--")[0], lapo.key.split("--")[1]];
+            laporesults[lapo.key.split("A")[0]] = [lapo.key.split("A")[1].split("--")[0], lapo.key.split("--")[1].split("C")[0]];
         }
 
         for (const serverId of Object.keys(laporesults)) {

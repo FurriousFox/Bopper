@@ -127,7 +127,18 @@ export function handleDelete(message: Message | PartialMessage) {
             });
         }
         else if (state.split("-")[0] == "3") {
-            // unstore deleted lapos
+            database.remove({
+                property: state.split("-")[1],
+                key: key,
+            });
+            database.remove({
+                property: "handled",
+                key: key,
+            });
+
+            try {
+                message?.reactions?.cache?.find(reaction => reaction.me)?.users?.remove(message.client.user.id);
+            } catch { /*  */ }
         }
 
     }
