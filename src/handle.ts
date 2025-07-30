@@ -19,19 +19,23 @@ for (const { name: command } of Deno.readDirSync(path.join(import.meta.dirname ?
 }
 
 
-export async function handleMessage(message: Message | PartialMessage, botPrefix: string | undefined, gainRep = true) {
+export async function handleMessage(message: Message | PartialMessage, botPrefix: string | undefined, isEdit = false) {
     if (message.partial) {
         message = await message.fetch();
     }
     if (!message.guildId || message.author.bot || message.author.system) return;
-    if (gainRep) updateRep(message.guildId, message.author.id, +1);
-    if (!gainRep) if (database.read({
-        guildId: message.guildId,
-        channelId: message.channelId,
-        userId: message.author.id,
-        messageId: message.id,
-        property: "handled",
-    }) !== undefined) return;
+    if (!isEdit) updateRep(message.guildId, message.author.id, +1);
+    if (isEdit) {
+        await handleDelete(message);
+
+        if (database.read({
+            guildId: message.guildId,
+            channelId: message.channelId,
+            userId: message.author.id,
+            messageId: message.id,
+            property: "handled",
+        }) !== undefined) return;
+    }
 
     // streak update [first, last]
     const streak = (database.read({
@@ -100,6 +104,10 @@ export async function handleDelete(message: Message | PartialMessage) {
         property: "handled",
         like: `${message.guildId}A${message.channelId}--%C${message.id}`
     })?.[0]?.value) !== undefined) {
+        const key = database.readAll({
+            property: "handled",
+            like: `${message.guildId}A${message.channelId}--%C${message.id}`
+        })[0].key;
         const _author = database.readAll({
             property: "handled",
             like: `${message.guildId}A${message.channelId}--%C${message.id}`
@@ -112,6 +120,11 @@ export async function handleDelete(message: Message | PartialMessage) {
                     await (await message.channel.messages.fetch(reply)).delete();
                 } catch { /*  */ }
             }
+
+            database.remove({
+                property: "handled",
+                key: key,
+            });
         }
         else if (state.split("-")[0] == "3") {
             // unstore deleted lapos

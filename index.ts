@@ -82,7 +82,7 @@ function lapoTimeout() {
 }
 
 client.on(Events.MessageCreate, message => handleMessage(message, botPrefix));
-client.on(Events.MessageUpdate, (_oldMessage, message) => handleMessage(message, botPrefix, false));
+client.on(Events.MessageUpdate, (_oldMessage, message) => handleMessage(message, botPrefix, true));
 client.on(Events.MessageDelete, message => handleDelete(message));
 client.on(Events.InteractionCreate, interaction => handleInteraction(interaction));
 

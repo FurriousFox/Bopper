@@ -28,6 +28,20 @@ export type writeFunction = (options: {
     value: string | number;
 }) => boolean;
 
+export type removeFunction = (options: {
+    guildId: Snowflake;
+    channelId?: Snowflake;
+    userId?: Snowflake;
+    messageId?: Snowflake;
+
+    property: string;
+} | {
+    key: string;
+
+    property: string;
+}) => boolean;
+
+
 export const read: readFunction = function (options) {
     if (!options.property.match(/^[a-zA-Z_]\w+$/)) return undefined;
     db.exec(`CREATE TABLE IF NOT EXISTS ${options.property} ( key TEXT PRIMARY KEY, value TEXT )`);
@@ -59,11 +73,29 @@ export const write: writeFunction = function (options) {
     return true;
 };
 
+export const remove: removeFunction = function (options) {
+    if (!options.property.match(/^[a-zA-Z_]\w+$/)) return false;
+    db.exec(`CREATE TABLE IF NOT EXISTS ${options.property} ( key TEXT PRIMARY KEY, value TEXT )`);
+
+    if ("key" in options) {
+        db.prepare(`DELETE FROM ${options.property} WHERE key=?`)
+            .run(options.key);
+    } else {
+        db.prepare(`DELETE FROM ${options.property} WHERE key=?`)
+            .run(`${options.guildId}A${options.channelId ?? ""}--${options.userId ?? ""}${options.messageId ? `C${options.messageId}` : ""}`);
+    }
+
+    return true;
+};
+
+
+
 declare global {
     var database: {
         read: readFunction;
         readAll: readAllFunction;
         write: writeFunction;
+        remove: removeFunction;
     };
 }
-globalThis.database = { read, write, readAll };
+globalThis.database = { read, write, readAll, remove };
