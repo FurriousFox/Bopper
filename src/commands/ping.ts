@@ -8,11 +8,12 @@ export default {
     slash: new SlashCommandBuilder().setName("ping").setDescription('Check bot ping and your latency').addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message")).setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel]),
     handler(message: Message): void {
         let response = '';
-        const nonce = message.nonce ? SnowflakeUtil.timestampFrom(message.nonce.toString()) : undefined;
+        let nonce = message.nonce ? SnowflakeUtil.timestampFrom(message.nonce.toString()) : undefined;
         const id = SnowflakeUtil.timestampFrom(message.id);
         const id_edit = message.editedTimestamp ?? SnowflakeUtil.timestampFrom(message.id);
         const now = +new Date();
 
+        if (nonce) if (Math.abs((id - nonce)) > 60000) nonce = undefined;
         if (nonce) response += `latency:   ${Math.round((id - nonce))}ms`;
         response += `\nping: ${nonce ? "        " : ""}${Math.round((now - id_edit))}ms\n`;
 
