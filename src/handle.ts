@@ -26,7 +26,7 @@ export async function handleMessage(message: Message | PartialMessage, botPrefix
     if (!message.guildId || message.author.bot || message.author.system) return;
     if (!isEdit) updateRep(message.guildId, message.author.id, +1);
     if (isEdit) {
-        await handleDelete(message);
+        handleDelete(message);
 
         if (database.read({
             guildId: message.guildId,
@@ -97,7 +97,7 @@ export function handleInteraction(interaction: Interaction) {
     }
 }
 
-export async function handleDelete(message: Message | PartialMessage) {
+export function handleDelete(message: Message | PartialMessage) {
     if (!message.inGuild() || message.author?.bot || message.author?.system) return;
     let state: string | undefined;
     if ((state = database.readAll({
@@ -117,7 +117,7 @@ export async function handleDelete(message: Message | PartialMessage) {
         else if (state.split("-")[0] == "2") {
             for (const reply of state.split("-").slice(1)) {
                 try {
-                    await (await message.channel.messages.fetch(reply)).delete();
+                    message.channel.messages.fetch(reply).then(message => message.delete().catch(() => { })).catch(() => { }).then(() => { });
                 } catch { /*  */ }
             }
 

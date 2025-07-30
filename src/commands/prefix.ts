@@ -7,14 +7,23 @@ export default {
     examples: ['prefix !', 'prefix .'],
     description: 'change bot prefix',
     slash: new SlashCommandBuilder().setName("prefix").setDescription('Set bot prefix').addStringOption(option => option.setMinLength(1).setMaxLength(1).setRequired(true).setName("prefix").setDescription("Bot prefix (e.g. ! , . ?)")).addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message")).setContexts([InteractionContextType.Guild]),
-    handler(message: Message): void {
+    async handler(message: Message): Promise<void> {
         if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator) && !message.member?.permissions.has(PermissionsBitField.Flags.ManageGuild)) {
-            message.reply({ content: "You don't have permission to change the prefix", allowedMentions: {} });
+            const reply = await message.reply({ content: "You don't have permission to change the prefix", allowedMentions: {} });
+            database.write({
+                guildId: message.guildId!,
+                channelId: message.channelId,
+                userId: message.author.id,
+                messageId: message.id,
+                property: "handled",
+                value: [2, reply.id].join("-")
+            });
             return;
         }
 
+        let reply;
         if (message.content.match(/^prefix ([a-zA-Z0-9 ])$/)) {
-            message.reply({ content: `\`${message.content.match(/^prefix ([a-zA-Z0-9 ])$/)![1]}\` isn't allowed as prefix`, allowedMentions: {} });
+            reply = await message.reply({ content: `\`${message.content.match(/^prefix ([a-zA-Z0-9 ])$/)![1]}\` isn't allowed as prefix`, allowedMentions: {} });
         } else {
             database.write({
                 guildId: message.guildId!,
@@ -22,8 +31,17 @@ export default {
                 value: message.content.match(/^prefix ([^a-zA-Z0-9 ])$/)![1]
             });
 
-            message.reply({ content: `set prefix to \`${message.content.match(/^prefix ([^a-zA-Z0-9 ])$/)![1].replace("`", "\` \` \`")}\``, allowedMentions: {} });
+            reply = await message.reply({ content: `set prefix to \`${message.content.match(/^prefix ([^a-zA-Z0-9 ])$/)![1].replace("`", "\` \` \`")}\``, allowedMentions: {} });
         }
+
+        database.write({
+            guildId: message.guildId!,
+            channelId: message.channelId,
+            userId: message.author.id,
+            messageId: message.id,
+            property: "handled",
+            value: [2, reply.id].join("-")
+        });
     },
     interactionHandler(interaction: ChatInputCommandInteraction) {
         const ephemeral = !!interaction.options.getBoolean("ephemeral");

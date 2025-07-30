@@ -18,7 +18,8 @@ export default {
     examples: [],
     description: 'list all commands',
     slash: new SlashCommandBuilder().setName("help").setDescription('List all commands').addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message")).setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel]),
-    handler(message: Message | ChatInputCommandInteraction): void {
+    async handler(message: Message | ChatInputCommandInteraction): Promise<void> {
+        let reply;
         const prefix = message instanceof ChatInputCommandInteraction ? '/' : database.read({
             guildId: message.guildId!,
             property: "prefix",
@@ -31,7 +32,17 @@ export default {
         }).join('\n');
 
         if (ephemeral) (message as ChatInputCommandInteraction).reply({ content: commands_text, allowedMentions: {}, flags: MessageFlags.Ephemeral });
-        else message.reply({ content: commands_text, allowedMentions: {} });
+        else reply = message.reply({ content: commands_text, allowedMentions: {} });
+
+        if (message instanceof Message && reply)
+            database.write({
+                guildId: message.guildId!,
+                channelId: message.channelId,
+                userId: message.author.id,
+                messageId: message.id,
+                property: "handled",
+                value: [2, (await reply).id].join("-")
+            });
     },
     interactionHandler(interaction: ChatInputCommandInteraction) {
         this.handler(interaction);

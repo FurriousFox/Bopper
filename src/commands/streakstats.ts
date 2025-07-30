@@ -21,6 +21,15 @@ export default {
         });
 
         const leaderboard = `## Streak stats\n${streaks.sort((a, b) => (+b[1]) - (+a[1])).filter(e => members.get(e[0] as string)?.user?.bot === false).map(e => `<@${e[0]}>: ${e[1]} ${e[1] == 1 ? 'day' : 'days'}`).join("\n")}\n\n-# maintain your streak by sending a message every day`;
-        message.reply({ content: leaderboard, allowedMentions: {} });
+        const reply = await message.reply({ content: leaderboard, allowedMentions: {} });
+
+        database.write({
+            guildId: message.guildId!,
+            channelId: message.channelId,
+            userId: message.author.id,
+            messageId: message.id,
+            property: "handled",
+            value: [2, reply.id].join("-")
+        });
     }
 };

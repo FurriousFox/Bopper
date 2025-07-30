@@ -6,7 +6,7 @@ export default {
     examples: [],
     description: 'check bot ping and your latency',
     slash: new SlashCommandBuilder().setName("ping").setDescription('Check bot ping and your latency').addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message")).setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel]),
-    handler(message: Message): void {
+    async handler(message: Message): Promise<void> {
         let response = '';
         let nonce = message.nonce ? SnowflakeUtil.timestampFrom(message.nonce.toString()) : undefined;
         const id = SnowflakeUtil.timestampFrom(message.id);
@@ -20,7 +20,15 @@ export default {
         if (nonce) response += "\n-# latency: time between you sending your message, and the message being received by discord";
         response += "\n-# ping: time between discord receiving your message, and the message being received by the bot";
 
-        message.reply({ content: response, allowedMentions: {} });
+        const reply = await message.reply({ content: response, allowedMentions: {} });
+        database.write({
+            guildId: message.guildId!,
+            channelId: message.channelId,
+            userId: message.author.id,
+            messageId: message.id,
+            property: "handled",
+            value: [2, reply.id].join("-")
+        });
     },
     async interactionHandler(interaction: ChatInputCommandInteraction) {
         let response = '';

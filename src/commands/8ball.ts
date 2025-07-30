@@ -9,8 +9,17 @@ export default {
     description: 'let the magic 8-ball answer your question',
     slash: new SlashCommandBuilder().setName("8ball").setDescription('Let the magic 8-ball answer your question').addStringOption(option => option.setRequired(false).setName("question").setDescription("Question to answer")).setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel]),
     context: new ContextMenuCommandBuilder().setName('8ball').setType(ApplicationCommandType.Message),
-    handler(message: Message): void {
-        message.reply({ content: ball8_responses[Math.floor(Math.random() * ball8_responses.length)], allowedMentions: {} });
+    async handler(message: Message): Promise<void> {
+        const reply = await message.reply({ content: ball8_responses[Math.floor(Math.random() * ball8_responses.length)], allowedMentions: {} });
+
+        database.write({
+            guildId: message.guildId!,
+            channelId: message.channelId,
+            userId: message.author.id,
+            messageId: message.id,
+            property: "handled",
+            value: [2, reply.id].join("-")
+        });
     },
     interactionHandler(interaction: ChatInputCommandInteraction | MessageContextMenuCommandInteraction) {
         if (interaction instanceof ChatInputCommandInteraction) interaction.reply({ content: `${interaction.options.getString("question") ? `> ${interaction.options.getString("question")}\n` : ''}${ball8_responses[Math.floor(Math.random() * ball8_responses.length)]}`, allowedMentions: {} });
