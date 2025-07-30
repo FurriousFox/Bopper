@@ -64,7 +64,7 @@ export async function handleMessage(message: Message | PartialMessage, botPrefix
         if (botPrefix !== undefined) if (message.content.startsWith(botPrefix)) message.content = message.content.substring(botPrefix.length + +(message.content[botPrefix.length] == " ")); else return;
     } else message.content = message.content.substring(1);
 
-    const handlers = commands.map(command => { return { command: command, match: message.content.match(command.match.ignoreCase ? command.match : new RegExp(command.match, `${command.match.flags}i` )) }; }).filter(e => e.match !== null);
+    const handlers = commands.map(command => { return { command: command, match: message.content.match(command.match.ignoreCase ? command.match : new RegExp(command.match, `${command.match.flags}i`)) }; }).filter(e => e.match !== null);
     if (handlers.length > 0) database.write({
         guildId: message.guildId,
         channelId: message.channelId,
@@ -90,5 +90,32 @@ export function handleInteraction(interaction: Interaction) {
         commands.find(command => command.context?.name == interaction.commandName)?.interactionHandler?.(interaction);
     } else if (interaction instanceof ButtonInteraction) {
         if (interaction.customId == "public_add") invite(interaction);
+    }
+}
+
+export async function handleDelete(message: Message | PartialMessage) {
+    if (!message.inGuild() || message.author?.bot || message.author?.system) return;
+    let state: string | undefined;
+    if ((state = database.readAll({
+        property: "handled",
+        like: `${message.guildId}A${message.channelId}--%C${message.id}`
+    })?.[0]?.value) !== undefined) {
+        const _author = database.readAll({
+            property: "handled",
+            like: `${message.guildId}A${message.channelId}--%C${message.id}`
+        })[0].key.split("--")[1].split("C")[0];
+
+        if (state.split("-")[0] == "1") { /*  */ }
+        else if (state.split("-")[0] == "2") {
+            for (const reply of state.split("-").slice(1)) {
+                try {
+                    await (await message.channel.messages.fetch(reply)).delete();
+                } catch { /*  */ }
+            }
+        }
+        else if (state.split("-")[0] == "3") {
+            // unstore deleted lapos
+        }
+
     }
 }

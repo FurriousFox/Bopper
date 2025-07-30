@@ -1,6 +1,6 @@
 import { Client, Events, GatewayIntentBits, Partials, Snowflake as _Snowflake, SlashCommandBuilder, Routes, ContextMenuCommandBuilder } from 'npm:discord.js';
 import './src/database.ts';
-import { handleMessage, handleInteraction } from "./src/handle.ts";
+import { handleMessage, handleInteraction, handleDelete } from "./src/handle.ts";
 import { updateLapos } from './src/lapo.ts';
 import process from "node:process";
 import path from "node:path";
@@ -83,6 +83,7 @@ function lapoTimeout() {
 
 client.on(Events.MessageCreate, message => handleMessage(message, botPrefix));
 client.on(Events.MessageUpdate, (_oldMessage, message) => handleMessage(message, botPrefix, false));
+client.on(Events.MessageDelete, message => handleDelete(message));
 client.on(Events.InteractionCreate, interaction => handleInteraction(interaction));
 
 client.login(Deno.env.get("DISCORD_TOKEN"));
