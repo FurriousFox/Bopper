@@ -21,20 +21,25 @@ export default {
         let reply = message.reply({ content: `-# AI response:\n`, allowedMentions: {}, flags: MessageFlags.SuppressEmbeds });
         let replyn = 0;
         let ai_response = "";
-        let delta: IteratorResult<string, void>;
+        let delta: IteratorResult<(string | boolean)[], void>;
+        let thought = false;
         while (!(delta = (await ai_stream.next())).done) {
+            ai_response += delta.value[0];
+            if (delta.value[1] && !thought) {
+                thought = true;
+                last += -500;
+            }
+
             if ((+new Date() - last) > 500) {
                 last = +new Date();
                 replies.push((await reply).id);
-                await (await reply).edit({ content: `-# AI response:\n${splitter(ai_response.trim())[replyn].trim() ?? "‎"}`, allowedMentions: {} });
+                await (await reply).edit({ content: `-# AI response:\n${delta.value[1] ? "_thinking..._\n" : ""}${splitter(ai_response.trim())[replyn].trim() ?? "‎"}`, allowedMentions: {} });
 
                 if ((splitter(ai_response.trim()).length - 1) > replyn) {
                     replyn++;
                     reply = (message).reply({ content: `${splitter(ai_response.trim())[replyn].trim() ?? "‎"}`, allowedMentions: {}, flags: MessageFlags.SuppressEmbeds });
                 }
             }
-
-            ai_response += delta.value;
         }
 
         do {

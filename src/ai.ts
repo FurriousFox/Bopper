@@ -32,8 +32,10 @@ export async function* ai(messages: Messages) {
             // console.log(complete);
             if (complete?.object == "chat.completion.chunk" && complete?.choices?.[0]?.delta?.content != undefined && typeof complete?.choices?.[0]?.delta?.content === "string") {
                 if (complete.choices[0].delta.content == "<think>") thinking = true;
-                if (!thinking) yield complete.choices[0].delta.content;
+                if (!thinking) yield [complete.choices[0].delta.content as string, false];
                 if (complete.choices[0].delta.content == "</think>") thinking = false;
+            } else if (complete?.object == "chat.completion.chunk" && complete?.choices?.[0]?.delta?.reasoning != undefined && typeof complete?.choices?.[0]?.delta?.reasoning === "string") {
+                yield ["", true];
             }
         }
     } catch (e) { console.log("error in ai.ts", e); }
