@@ -9,11 +9,25 @@ type Messages = {
 export async function* ai(messages: Messages) {
     let thinking = false;
 
-    const stream = await fetch("https://ai.hackclub.com/chat/completions", { method: "POST", body: JSON.stringify({ messages, stream: true }), headers: { "Content-Type": "application/json", "Accept": "text/event-stream" } });
-    if (!stream.body) return;
+    let model = "openai/gpt-oss-120b";
+    try {
+        const modela = (await (await fetch("https://ai.hackclub.com/model")).text()).split(",")[0];
+        const modelb = (await (await fetch("https://ai.hackclub.com/model")).text()).split(",").filter(e => e.includes("openai") || e.includes("gpt"))[0];
+
+        model = modelb ?? modela;
+    } catch (e) {
+        console.log(e);
+    }
+
+    const stream = await fetch("https://ai.hackclub.com/chat/completions", { method: "POST", body: JSON.stringify({ messages, stream: true, model: model }), headers: { "Content-Type": "application/json", "Accept": "text/event-stream" } });
+    if (!stream.body) return console.log("huh no stream.body");
 
     try {
-        for await (const complete_json of readline.createInterface({ input: Readable.fromWeb(stream.body as import("stream/web").ReadableStream) })) {
+        for await (let complete_json of readline.createInterface({ input: Readable.fromWeb(stream.body as import("stream/web").ReadableStream) })) {
+            // console.log(complete_json);
+            if (complete_json.startsWith("data: ")) complete_json = complete_json.slice(6);
+            if (!complete_json.trim().length) continue;
+
             const complete = JSON.parse(complete_json);
             // console.log(complete);
             if (complete?.object == "chat.completion.chunk" && complete?.choices?.[0]?.delta?.content != undefined && typeof complete?.choices?.[0]?.delta?.content === "string") {
@@ -22,7 +36,7 @@ export async function* ai(messages: Messages) {
                 if (complete.choices[0].delta.content == "</think>") thinking = false;
             }
         }
-    } catch { /*  */ }
+    } catch (e) { console.log("error in ai.ts", e); }
 };
 
 export function splitter(text: string) {
