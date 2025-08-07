@@ -2,7 +2,7 @@ import { Message, MessageFlags, Snowflake } from 'npm:discord.js';
 import { ai, splitter } from "../ai.ts";
 
 export default {
-    match: /^ai (.+)$/,
+    match: /^ai (.+)$/s,
     command: 'ai <question>',
     examples: ["ai Is the sky blue?"],
     description: 'ask ai something',

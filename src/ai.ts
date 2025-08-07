@@ -11,10 +11,12 @@ export async function* ai(messages: Messages) {
 
     let model = "openai/gpt-oss-120b";
     try {
-        const modela = (await (await fetch("https://ai.hackclub.com/model")).text()).split(",")[0];
-        const modelb = (await (await fetch("https://ai.hackclub.com/model")).text()).split(",").filter(e => e.includes("openai") || e.includes("gpt"))[0];
-
-        model = modelb ?? modela;
+        const models = (await (await fetch("https://ai.hackclub.com/model")).text());
+        if (!models.includes(model)) {
+            const modela = models.split(",")[0];
+            const modelb = models.split(",").filter(e => e.includes("openai") || e.includes("gpt"))[0];
+            model = modelb ?? modela;
+        }
     } catch (e) {
         console.log(e);
     }
