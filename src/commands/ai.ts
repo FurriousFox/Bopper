@@ -35,9 +35,15 @@ export default {
             if ((+new Date() - last) > 500) {
                 last = +new Date();
                 replies.push((await reply).id);
-                await (await reply).edit({ content: `${replyn == 0 ? "-# AI response:\n" : ""}${delta.value[1] ? "_thinking..._\n" : ""}${splitter(ai_response.trim())[replyn].trim() ?? "‎"}`, allowedMentions: {} });
 
-                if ((splitter(ai_response.trim()).length - 1) > replyn && !ephemeral) { // it's impossible to edit an ephemeral follow-up message
+                const awaited_reply = await reply;
+                if (awaited_reply instanceof Message && message instanceof ChatInputCommandInteraction && ephemeral && replyn > 0) {
+                    message.editReply({ message: awaited_reply, content: `${replyn == 0 ? "-# AI response:\n" : ""}${delta.value[1] ? "_thinking..._\n" : ""}${splitter(ai_response.trim())[replyn].trim() ?? "‎"}`, allowedMentions: {} });
+                } else {
+                    await (await reply).edit({ content: `${replyn == 0 ? "-# AI response:\n" : ""}${delta.value[1] ? "_thinking..._\n" : ""}${splitter(ai_response.trim())[replyn].trim() ?? "‎"}`, allowedMentions: {} });
+                }
+
+                if ((splitter(ai_response.trim()).length - 1) > replyn) {
                     replyn++;
                     if (message instanceof ChatInputCommandInteraction) {
                         reply = (message).followUp({ content: `${splitter(ai_response.trim())[replyn].trim() ?? "‎"}`, allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | (ephemeral ? MessageFlags.Ephemeral : 0) });
@@ -45,14 +51,18 @@ export default {
                         reply = (message).reply({ content: `${splitter(ai_response.trim())[replyn].trim() ?? "‎"}`, allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | (ephemeral ? MessageFlags.Ephemeral : 0) });
                     }
                 }
-
-                if ((splitter(ai_response.trim()).length - 1) > replyn && ephemeral) last += 600000;
             }
         }
 
         do {
             replies.push((await reply).id);
-            if (!ephemeral || replyn == 0) await (await reply).edit({ content: `${replyn == 0 ? "-# AI response:\n" : ""}${splitter(ai_response.trim())[replyn].trim() ?? "Error"}`, allowedMentions: {} });
+
+            const awaited_reply = await reply;
+            if (awaited_reply instanceof Message && message instanceof ChatInputCommandInteraction && ephemeral && replyn > 0) {
+                message.editReply({ message: awaited_reply, content: `${replyn == 0 ? "-# AI response:\n" : ""}${splitter(ai_response.trim())[replyn].trim() ?? "Error"}`, allowedMentions: {} });
+            } else {
+                await (await reply).edit({ content: `${replyn == 0 ? "-# AI response:\n" : ""}${splitter(ai_response.trim())[replyn].trim() ?? "Error"}`, allowedMentions: {} });
+            }
 
             if ((splitter(ai_response.trim()).length - 1) > replyn) {
                 replyn++;
