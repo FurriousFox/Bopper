@@ -8,7 +8,7 @@ export default {
     examples: ['8ball', '8ball Should I invest in Bitcoin?'],
     description: 'let the magic 8-ball answer your question',
     slash: new SlashCommandBuilder().setName("8ball").setDescription('Let the magic 8-ball answer your question').addStringOption(option => option.setRequired(false).setName("question").setDescription("Question to answer")).setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel]),
-    context: new ContextMenuCommandBuilder().setName('8ball').setType(ApplicationCommandType.Message),
+    context: new ContextMenuCommandBuilder().setName('8ball').setType(ApplicationCommandType.Message).setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel]),
     async handler(message: Message): Promise<void> {
         const reply = await message.reply({ content: ball8_responses[Math.floor(Math.random() * ball8_responses.length)], allowedMentions: {} });
 
