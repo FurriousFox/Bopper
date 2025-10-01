@@ -7,7 +7,7 @@ export default {
     command: 'rep <user>',
     examples: ['rep', 'rep @Bopper'],
     description: 'check rep balance',
-    slash: new SlashCommandBuilder().setName("rep").setDescription('Check rep balance or gift rep points').addSubcommand(command => command.setName("bal").setDescription('Check rep balance').addUserOption(option => option.setRequired(false).setName("user").setDescription("User to check balance for")).addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message"))).addSubcommand(command => command.setName("give").setDescription('Give someone (part of) your rep points').addUserOption(option => option.setRequired(true).setName("user").setDescription("User to give rep points")).addIntegerOption(option => option.setRequired(true).setName("amount").setDescription("Amount of rep points to give").setMinValue(0))).setContexts([InteractionContextType.Guild]),
+    slash: new SlashCommandBuilder().setName("rep").setDescription('Check rep balance or gift rep points').addSubcommand(command => command.setName("bal").setDescription('Check rep balance').addUserOption(option => option.setRequired(false).setName("user").setDescription("User to check balance for")).addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message"))).addSubcommand(command => command.setName("stats").setDescription('Show leaderboard for rep points').addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message"))).addSubcommand(command => command.setName("give").setDescription('Give someone (part of) your rep points').addUserOption(option => option.setRequired(true).setName("user").setDescription("User to give rep points")).addIntegerOption(option => option.setRequired(true).setName("amount").setDescription("Amount of rep points to give").setMinValue(0))).setContexts([InteractionContextType.Guild]),
     async handler(message: Message, match: RegExpMatchArray): Promise<void> {
         let reply;
         if (match[2]) {
@@ -53,6 +53,16 @@ export default {
             } else {
                 interaction.reply({ content: `Can't give rep points to users outside of this discord server!`, allowedMentions: { users: [] } });
             }
+        } else if (interaction.options.getSubcommand(true) === "stats") {
+            const members = await interaction.guild!.members.fetch();
+
+            const reps = database.readAll({
+                like: `${interaction.guildId}A`,
+                property: "rep",
+            });
+            const leaderboard = `## Rep stats\n${reps.sort((a, b) => (+b.value) - (+a.value)).map(e => [e.key.split("--")[1], e.value]).filter(e => members.get(e[0])?.user?.bot === false).map(e => `<@${e[0]}>: ${e[1]}`).join("\n")}\n\n-# you gain 1 rep point per message\n-# rep points can be gifted using the rep give command`;
+
+            await interaction.reply({ content: leaderboard, allowedMentions: {}, flags: ephemeral ? MessageFlags.Ephemeral : undefined });
         }
     }
 };
