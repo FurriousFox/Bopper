@@ -98,7 +98,7 @@ export function handleInteraction(interaction: Interaction) {
 }
 
 export function handleDelete(message: Message | PartialMessage) {
-    if (!message.inGuild() || message.author?.bot || message.author?.system) return;
+    if (!message.inGuild() /* || message.author?.bot */ || message.author?.system) return;
     let state: string | undefined;
     if ((state = database.readAll({
         property: "handled",
@@ -137,7 +137,7 @@ export function handleDelete(message: Message | PartialMessage) {
             });
 
             try {
-                message?.reactions?.cache?.find(reaction => reaction.me)?.users?.remove(message.client.user.id);
+                message?.reactions?.cache?.find(reaction => reaction.me)?.users?.remove(message.client.user.id).catch(() => { });
             } catch { /*  */ }
         }
 

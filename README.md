@@ -15,12 +15,10 @@ a Discord bot to boost engagement, keeping the community active
 - streak (send a message every day to keep up your streak)
 - streak leaderboard
 
-<sup><sub>**slash-commands are still a work in progress, use `.help` to get started**</sup></sub>
-
 ## Inviting
 
 Add the bot to your own server by using [this link](https://discord.com/oauth2/authorize?client_id=1395103292899590337)  
-Use the `.help` command to get started
+Use `/help` or `.help` to get started
 
 ## Running yourself
 

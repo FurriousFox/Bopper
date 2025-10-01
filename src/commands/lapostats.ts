@@ -1,4 +1,5 @@
-import { Message, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, MessageFlags } from 'discord.js';
+import { Message, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, MessageFlags, ApplicationIntegrationType } from 'discord.js';
+import { invite_ephemeral } from "../add.ts";
 
 export default {
     match: /^lapostats$/,
@@ -35,6 +36,11 @@ export default {
         }
     },
     interactionHandler(interaction: ChatInputCommandInteraction) {
+        if (!interaction.authorizingIntegrationOwners[ApplicationIntegrationType.GuildInstall]) {
+            invite_ephemeral(interaction);
+            return;
+        }
+
         this.handler(interaction);
     }
 };
