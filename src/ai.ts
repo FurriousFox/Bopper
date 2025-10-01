@@ -30,6 +30,8 @@ export async function* ai(messages: Messages) {
             if (complete_json.startsWith("data: ")) complete_json = complete_json.slice(6);
             if (!complete_json.trim().length) continue;
 
+            if (complete_json == "[DONE]") continue;
+
             const complete = JSON.parse(complete_json);
             // console.log(complete);
             if (complete?.object == "chat.completion.chunk" && complete?.choices?.[0]?.delta?.content != undefined && typeof complete?.choices?.[0]?.delta?.content === "string") {
