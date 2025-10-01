@@ -1,15 +1,18 @@
-import { Message } from 'discord.js';
+import { Message, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, MessageFlags } from 'discord.js';
 
 export default {
     match: /^lapostats$/,
     command: 'lapostats',
     examples: [],
     description: 'show leaderboard for lapo points',
-    async handler(message: Message): Promise<void> {
-        const prefix = database.read({
+    slash: new SlashCommandBuilder().setName("lapostats").setDescription('Show leaderboard for lapo points').addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message")).setContexts([InteractionContextType.Guild]),
+    async handler(message: Message | ChatInputCommandInteraction): Promise<void> {
+        const prefix = message instanceof ChatInputCommandInteraction ? '/' : database.read({
             guildId: message.guildId!,
             property: "prefix",
         }) ?? ".";
+        const ephemeral = message instanceof ChatInputCommandInteraction ? !!message.options.getBoolean("ephemeral") : false;
+
         const members = await message.guild!.members.fetch();
         const lapos = database.readAll({
             like: `${message.guildId}A`,
@@ -17,14 +20,21 @@ export default {
         });
         const leaderboard = `## Lapo stats\n${lapos.sort((a, b) => (+b.value) - (+a.value)).map(e => [e.key.split("--")[1], e.value]).filter(e => members.get(e[0])?.user?.bot === false).map(e => `<@${e[0]}>: ${e[1]}`).join("\n")}\n\n-# you gain 1 lapo point when being the last user of the day to use the lapo command\n-# determined by when the message is received by discord (see ${prefix}ping for more info)`;
 
-        const reply = await message.reply({ content: leaderboard, allowedMentions: {} });
-        database.write({
-            guildId: message.guildId!,
-            channelId: message.channelId,
-            userId: message.author.id,
-            messageId: message.id,
-            property: "handled",
-            value: [2, reply.id].join("-")
-        });
+        if (!(message instanceof ChatInputCommandInteraction)) {
+            const reply = await message.reply({ content: leaderboard, allowedMentions: {} });
+            database.write({
+                guildId: message.guildId!,
+                channelId: message.channelId,
+                userId: message.author.id,
+                messageId: message.id,
+                property: "handled",
+                value: [2, reply.id].join("-")
+            });
+        } else {
+            await message.reply({ content: leaderboard, allowedMentions: {}, flags: ephemeral ? MessageFlags.Ephemeral : undefined });
+        }
+    },
+    interactionHandler(interaction: ChatInputCommandInteraction) {
+        this.handler(interaction);
     }
 };
