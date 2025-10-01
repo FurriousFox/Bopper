@@ -1,13 +1,13 @@
 import { Message, ChatInputCommandInteraction, SlashCommandBuilder, InteractionContextType, ApplicationIntegrationType, GuildMember, MessageFlags } from 'discord.js';
 import { invite_ephemeral } from "../add.ts";
-import { getRep } from '../rep.ts';
+import { getRep, updateRep } from '../rep.ts';
 
 export default {
     match: /^rep( <@(\d+)>)?$/,
     command: 'rep <user>',
     examples: ['rep', 'rep @Bopper'],
     description: 'check rep balance',
-    slash: new SlashCommandBuilder().setName("rep").setDescription('Check rep balance').addUserOption(option => option.setRequired(false).setName("user").setDescription("User to check balance for")).addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message")).setContexts([InteractionContextType.Guild]),
+    slash: new SlashCommandBuilder().setName("rep").setDescription('Check rep balance or gift rep points').addSubcommand(command => command.setName("bal").setDescription('Check rep balance').addUserOption(option => option.setRequired(false).setName("user").setDescription("User to check balance for")).addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message"))).addSubcommand(command => command.setName("give").setDescription('Give someone (part of) your rep points').addUserOption(option => option.setRequired(true).setName("user").setDescription("User to give rep points")).addIntegerOption(option => option.setRequired(true).setName("amount").setDescription("Amount of rep points to give").setMinValue(0))).setContexts([InteractionContextType.Guild]),
     async handler(message: Message, match: RegExpMatchArray): Promise<void> {
         let reply;
         if (match[2]) {
@@ -31,11 +31,28 @@ export default {
             return;
         }
 
-        const user = interaction.options.getMember("user");
-        if (user instanceof GuildMember) {
-            await interaction.reply({ content: `${user} has ${getRep(interaction.guildId!, user.id).toString()} rep points`, allowedMentions: {}, flags: ephemeral ? MessageFlags.Ephemeral : undefined });
-        } else {
-            await interaction.reply({ content: `you have ${getRep(interaction.guildId!, interaction.user.id)} rep points`, allowedMentions: {}, flags: ephemeral ? MessageFlags.Ephemeral : undefined });
+        if (interaction.options.getSubcommand(true) === "bal") {
+            const user = interaction.options.getMember("user");
+            if (user instanceof GuildMember) {
+                await interaction.reply({ content: `${user} has ${getRep(interaction.guildId!, user.id).toString()} rep points`, allowedMentions: {}, flags: ephemeral ? MessageFlags.Ephemeral : undefined });
+            } else {
+                await interaction.reply({ content: `you have ${getRep(interaction.guildId!, interaction.user.id)} rep points`, allowedMentions: {}, flags: ephemeral ? MessageFlags.Ephemeral : undefined });
+            }
+        } else if (interaction.options.getSubcommand(true) === "give") {
+            const user = interaction.options.getMember("user");
+            const amount = interaction.options.getInteger("amount", true).toString();
+            let lowrep: number;
+            if (user instanceof GuildMember) {
+                if ((lowrep = getRep(interaction.guildId!, interaction.user.id)) < parseInt(amount)) {
+                    interaction.reply({ content: `You only have ${lowrep} rep points!`, allowedMentions: {} });
+                } else {
+                    updateRep(interaction.guildId!, interaction.user.id, -parseInt(amount));
+                    updateRep(interaction.guildId!, user.id, parseInt(amount));
+                    interaction.reply({ content: `Gifted ${amount} rep ${amount === "1" ? "point" : "points"} to <@${user.id}>!`, allowedMentions: { users: [user.id] } });
+                }
+            } else {
+                interaction.reply({ content: `Can't give rep points to users outside of this discord server!`, allowedMentions: { users: [] } });
+            }
         }
     }
 };
