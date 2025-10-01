@@ -1,4 +1,4 @@
-import { Snowflake } from 'npm:discord.js';
+import { Snowflake } from 'discord.js';
 import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
 

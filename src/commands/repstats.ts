@@ -1,4 +1,4 @@
-import { Message } from 'npm:discord.js';
+import { Message } from 'discord.js';
 
 export default {
     match: /^repstats$/,

@@ -1,4 +1,4 @@
-import { Message, SnowflakeUtil } from 'npm:discord.js';
+import { Message, SnowflakeUtil } from 'discord.js';
 
 export default {
     match: /^lapo$/,

@@ -1,4 +1,4 @@
-import { Snowflake } from 'npm:discord.js';
+import { Snowflake } from 'discord.js';
 
 export function updateRep(guildId: Snowflake, userId: Snowflake, change: number) {
     let rep = parseInt(database.read({

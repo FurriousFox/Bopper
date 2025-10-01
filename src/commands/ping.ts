@@ -1,4 +1,4 @@
-import { Message, SnowflakeUtil, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, MessageFlags } from 'npm:discord.js';
+import { Message, SnowflakeUtil, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, MessageFlags } from 'discord.js';
 
 export default {
     match: /^ping|pong$/,

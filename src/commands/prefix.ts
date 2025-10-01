@@ -1,4 +1,4 @@
-import { Message, PermissionsBitField, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, MessageFlags, ApplicationIntegrationType } from 'npm:discord.js';
+import { Message, PermissionsBitField, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, MessageFlags, ApplicationIntegrationType } from 'discord.js';
 import { invite_ephemeral } from "../add.ts";
 
 export default {

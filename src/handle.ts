@@ -1,6 +1,6 @@
 import { updateRep } from './rep.ts';
 import path from "node:path";
-import { Message, PartialMessage, SlashCommandBuilder, Interaction, ChatInputCommandInteraction, ContextMenuCommandBuilder, MessageContextMenuCommandInteraction, ButtonInteraction } from "npm:discord.js";
+import { Message, PartialMessage, SlashCommandBuilder, Interaction, ChatInputCommandInteraction, ContextMenuCommandBuilder, MessageContextMenuCommandInteraction, ButtonInteraction } from "discord.js";
 import { invite } from './add.ts';
 
 const commands: {

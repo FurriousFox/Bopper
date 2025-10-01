@@ -1,4 +1,4 @@
-import { Message, MessageFlags, Snowflake, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, InteractionResponse, OmitPartialGroupDMChannel } from 'npm:discord.js';
+import { Message, MessageFlags, Snowflake, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, InteractionResponse, OmitPartialGroupDMChannel } from 'discord.js';
 import { ai, splitter } from "../ai.ts";
 
 export default {

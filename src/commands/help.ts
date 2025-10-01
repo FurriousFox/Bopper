@@ -1,5 +1,5 @@
 import path from "node:path";
-import { Message, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, MessageFlags } from 'npm:discord.js';
+import { Message, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, MessageFlags } from 'discord.js';
 const commands: {
     command: string,
     examples: string[],

@@ -1,4 +1,4 @@
-import { Message } from 'npm:discord.js';
+import { Message } from 'discord.js';
 import { getRep } from '../rep.ts';
 
 export default {

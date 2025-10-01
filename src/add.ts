@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, MessageFlags, ButtonBuilder, ActionRowBuilder, ButtonStyle, ButtonInteraction, Snowflake } from 'npm:discord.js';
+import { ChatInputCommandInteraction, MessageFlags, ButtonBuilder, ActionRowBuilder, ButtonStyle, ButtonInteraction, Snowflake } from 'discord.js';
 
 const interactions: Record<Snowflake, ChatInputCommandInteraction> = {};
 

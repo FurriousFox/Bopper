@@ -1,4 +1,4 @@
-import { Snowflake } from 'npm:discord.js';
+import { Snowflake } from 'discord.js';
 
 export function updateLapos(guildId: Snowflake, userId: Snowflake) {
     let lapos = parseInt(database.read({
