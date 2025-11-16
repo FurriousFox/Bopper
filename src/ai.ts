@@ -17,7 +17,6 @@ export async function refreshModels() {
 }
 setInterval(refreshModels, 60 * 60 * 1000);
 refreshModels();
-const _ = models;
 
 function selectModel({ web = false }): [string, boolean] {
     try {
@@ -63,7 +62,7 @@ export async function* ai(messages: Messages, { web }: { web: boolean; }) {
 
     try {
         for await (let complete_json of readline.createInterface({ input: Readable.fromWeb(stream.body as import("stream/web").ReadableStream) })) {
-            console.log(complete_json);
+            // console.log(complete_json);
 
             if (complete_json.startsWith("data: ")) complete_json = complete_json.slice(6);
             if (!complete_json.trim().length) continue;
@@ -92,3 +91,48 @@ export async function* ai(messages: Messages, { web }: { web: boolean; }) {
         }
     } catch (e) { console.log("error in ai.ts", e); }
 };
+
+export function splitter(text: string) {
+    let parts: string[] = [];
+    let part = "";
+    let codeblock = false;
+    for (const i in text as unknown as object) {
+        if (text.startsWith("```", +i)) codeblock = !codeblock;
+
+        if (!codeblock && text.startsWith("\n\n", +i)) {
+            parts.push(part);
+            part = "";
+        }
+
+        part += text[+i];
+    }
+    parts.push(part);
+    parts = parts.map(part => {
+        const party = part.split("\n");
+
+        let codeblock = false;
+        let codepad = "";
+        for (const par in party) {
+            if (party[par].match(/^( *)```/)) {
+                codeblock = !codeblock;
+                codepad = party[par].match(/^( *)```/)![1]!;
+            }
+
+            if ((codeblock || party[par].match(/^( *)```/)) && party[par].startsWith(codepad)) {
+                party[par] = party[par].slice(codepad.length);
+            }
+        }
+
+        return party.join("\n");
+    });
+    parts = parts!.flatMap(part => part.length > 1950 ? part.match(/(.{1,1950}\.)(?=\s|$)|(.{1,1950})(?=\s)|(.{1,1950})/g)! : part);
+
+    const merged: string[] = [];
+    for (const part of parts) {
+        const last = merged[merged.length - 1];
+        if (last && (last + part).length <= 1950) merged[merged.length - 1] = last + part;
+        else merged.push(part);
+    }
+
+    return merged;
+}
