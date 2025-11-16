@@ -1,5 +1,6 @@
 import { Client, Events, GatewayIntentBits, Partials, Snowflake as _Snowflake, SlashCommandBuilder, Routes, ContextMenuCommandBuilder } from 'discord.js';
 import './src/database.ts';
+import './src/metadatabase.ts';
 import { handleMessage, handleInteraction, handleDelete } from "./src/handle.ts";
 import { updateLapos } from './src/lapo.ts';
 import process from "node:process";
