@@ -1,5 +1,5 @@
 import { Message, ChatInputCommandInteraction, SlashCommandBuilder, InteractionContextType, ApplicationIntegrationType, GuildMember, MessageFlags } from 'discord.js';
-import { invite_ephemeral } from "../add.ts";
+import { invite_ephemeral } from "../invite.ts";
 import { getRep, updateRep } from '../rep.ts';
 
 export default {

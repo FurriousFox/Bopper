@@ -1,5 +1,5 @@
 import { Message, SnowflakeUtil, ChatInputCommandInteraction, SlashCommandBuilder, InteractionContextType, ApplicationIntegrationType } from 'discord.js';
-import { invite_ephemeral } from "../add.ts";
+import { invite_ephemeral } from "../invite.ts";
 
 export default {
     match: /^lapo$/,

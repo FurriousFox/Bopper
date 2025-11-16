@@ -84,6 +84,6 @@ function lapoTimeout() {
 client.on(Events.MessageCreate, message => handleMessage(message, botPrefix));
 client.on(Events.MessageUpdate, (_oldMessage, message) => handleMessage(message, botPrefix, true));
 client.on(Events.MessageDelete, message => handleDelete(message));
-client.on(Events.InteractionCreate, interaction => handleInteraction(interaction));
+client.on(Events.InteractionCreate, interaction => handleInteraction(interaction, botPrefix));
 
 client.login(Deno.env.get("DISCORD_TOKEN"));

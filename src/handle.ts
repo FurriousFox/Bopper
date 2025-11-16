@@ -1,7 +1,7 @@
 import { updateRep } from './rep.ts';
 import path from "node:path";
 import { Message, PartialMessage, SlashCommandBuilder, Interaction, ChatInputCommandInteraction, ContextMenuCommandBuilder, MessageContextMenuCommandInteraction, ButtonInteraction } from "discord.js";
-import { invite } from './add.ts';
+import { invite } from './invite.ts';
 
 const commands: {
     match: RegExp;
@@ -10,8 +10,10 @@ const commands: {
     description: string;
     slash?: SlashCommandBuilder;
     context?: ContextMenuCommandBuilder;
-    handler: (message: Message, match?: RegExpMatchArray) => void | Promise<void>;
+    handler: (message: Message, match?: RegExpMatchArray, reason?: string) => void | Promise<void>;
     interactionHandler?: (interaction: ChatInputCommandInteraction | MessageContextMenuCommandInteraction, match?: RegExpMatchArray) => void | Promise<void>;
+    buttonIds: string[];
+    buttonHandler: (buttonId: string, interaction: ButtonInteraction, rehandle?: () => void) => void | Promise<void>;
 }[] = [];
 
 for (const { name: command } of Deno.readDirSync(path.join(import.meta.dirname ?? "", "./commands")).filter(e => e.isFile)) {
@@ -19,7 +21,7 @@ for (const { name: command } of Deno.readDirSync(path.join(import.meta.dirname ?
 }
 
 
-export async function handleMessage(message: Message | PartialMessage, botPrefix: string | undefined, isEdit = false) {
+export async function handleMessage(message: Message | PartialMessage, botPrefix: string | undefined, isEdit = false, reason?: string) {
     if (message.partial) {
         message = await message.fetch();
     }
@@ -78,11 +80,11 @@ export async function handleMessage(message: Message | PartialMessage, botPrefix
         value: 1
     });
     for (const { command: { handler }, match } of handlers) {
-        await handler(message, match!);
+        await handler(message, match!, reason);
     }
 };
 
-export function handleInteraction(interaction: Interaction) {
+export function handleInteraction(interaction: Interaction, botPrefix: string | undefined) {
     if (interaction instanceof ChatInputCommandInteraction) { // slash command
         /*
             group dm / generic dms / dms with the bot: guildId == null
@@ -94,6 +96,8 @@ export function handleInteraction(interaction: Interaction) {
         commands.find(command => command.context?.name == interaction.commandName)?.interactionHandler?.(interaction);
     } else if (interaction instanceof ButtonInteraction) {
         if (interaction.customId == "public_add") invite(interaction);
+        else commands.find(command => command.buttonIds?.includes(interaction.customId))?.buttonHandler?.(interaction.customId, interaction,
+            async () => { try { if (interaction.message.reference) { const ref = await interaction.message.fetchReference(); handleDelete(ref); handleMessage(ref, botPrefix, true, interaction.customId); } } catch (_) {/*  */ } });
     }
 }
 
