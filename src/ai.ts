@@ -136,3 +136,48 @@ export function splitter(text: string) {
 
     return merged;
 }
+
+export function splitter4000(text: string) {
+    let parts: string[] = [];
+    let part = "";
+    let codeblock = false;
+    for (const i in text as unknown as object) {
+        if (text.startsWith("```", +i)) codeblock = !codeblock;
+
+        if (!codeblock && text.slice(+i).match("^\\*\\*[^\\s]")) {
+            parts.push(part);
+            part = "";
+        }
+
+        part += text[+i];
+    }
+    parts.push(part);
+    parts = parts.map(part => {
+        const party = part.split("\n");
+
+        let codeblock = false;
+        let codepad = "";
+        for (const par in party) {
+            if (party[par].match(/^( *)```/)) {
+                codeblock = !codeblock;
+                codepad = party[par].match(/^( *)```/)![1]!;
+            }
+
+            if ((codeblock || party[par].match(/^( *)```/)) && party[par].startsWith(codepad)) {
+                party[par] = party[par].slice(codepad.length);
+            }
+        }
+
+        return party.join("\n");
+    });
+    parts = parts!.flatMap(part => part.length > 4000 ? part.match(/(.{1,4000}\.)(?=\s|$)|(.{1,4000})(?=\s)|(.{1,4000})/g)! : part);
+
+    const merged: string[] = [];
+    for (const part of parts) {
+        const last = merged[merged.length - 1];
+        if (last && (last + part).length <= 4000) merged[merged.length - 1] = last + part;
+        else merged.push(part);
+    }
+
+    return merged;
+}
