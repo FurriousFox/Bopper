@@ -1,4 +1,4 @@
-import { Message, MessageFlags, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, InteractionResponse, OmitPartialGroupDMChannel, ButtonBuilder, ActionRowBuilder, ButtonStyle, ButtonInteraction } from 'discord.js';
+import { Message, MessageFlags, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, InteractionResponse, OmitPartialGroupDMChannel, ButtonBuilder, ActionRowBuilder, ButtonStyle, ButtonInteraction, ContextMenuCommandBuilder, ApplicationCommandType, MessageContextMenuCommandInteraction } from 'discord.js';
 import { ai, splitter, splitter4000 } from "../ai.ts";
 
 export default {
@@ -7,7 +7,8 @@ export default {
     examples: ["ai Is the sky blue?"],
     description: 'ask ai something',
     slash: new SlashCommandBuilder().setName("ai").setDescription('Ask AI something').addStringOption(option => option.setRequired(true).setName("prompt").setDescription("AI prompt")).addBooleanOption(option => option.setRequired(false).setName("web").setDescription("Search the web")).addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message")).setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel]),
-    async handler(message: Message<true> | ChatInputCommandInteraction, match: RegExpMatchArray, reason?: string): Promise<void> {
+    context: [new ContextMenuCommandBuilder().setName('ai').setType(ApplicationCommandType.Message).setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel]), new ContextMenuCommandBuilder().setName('ai (web search)').setType(ApplicationCommandType.Message).setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel])],
+    async handler(message: Message<true> | ChatInputCommandInteraction | MessageContextMenuCommandInteraction, match: RegExpMatchArray, reason?: string): Promise<void> {
         const ephemeral = message instanceof ChatInputCommandInteraction ? message.options.getBoolean("ephemeral") ? MessageFlags.Ephemeral : 0 : 0;
 
         let web = (reason == "retry_web_search" || reason == "web_search");
@@ -76,14 +77,14 @@ export default {
                     try {
                         const ai_thought_formatted = ai_thought.split("\n").map(e => e.trim().length ? `-# ${e}` : e).join("\n").trim();
 
-                        if (await reply instanceof Message && message instanceof ChatInputCommandInteraction && ephemeral && replies.length > 1) {
+                        if (await reply instanceof Message && (message instanceof ChatInputCommandInteraction || message instanceof MessageContextMenuCommandInteraction) && ephemeral && replies.length > 1) {
                             await message.editReply({ message: (await reply).id, content: `-# AI response:\n${(thinking || forcedEdit) ? `_thinking..._\n\n${ai_thought_formatted.length > 1900 ? "..." + ai_thought_formatted.slice(-1900) : ai_thought_formatted}` : ""}${(thinking || forcedEdit) ? "" : ai_response_splits[replies.length - 1]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral });
                         } else {
                             await (await reply).edit({ content: `-# AI response:\n${(thinking || forcedEdit) ? `_thinking..._\n\n${ai_thought_formatted.length > 1900 ? "..." + ai_thought_formatted.slice(-1900) : ai_thought_formatted}` : ""}${(thinking || forcedEdit) ? "" : ai_response_splits[replies.length - 1]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral });
                         }
 
                         if (ai_response_splits.length > replies.length) {
-                            if (message instanceof ChatInputCommandInteraction) {
+                            if (message instanceof ChatInputCommandInteraction || message instanceof MessageContextMenuCommandInteraction) {
                                 reply = await message.followUp({ content: `${ai_response_splits[replies.length]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral });
                             } else {
                                 reply = await message.reply({ content: `${ai_response_splits[replies.length]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral });
@@ -104,12 +105,12 @@ export default {
         await canEditPromise;
 
         const components = [];
-        if (!web && !(message instanceof ChatInputCommandInteraction)) components.push(new ButtonBuilder().setLabel("Use web search").setCustomId("retry_web_search").setStyle(ButtonStyle.Secondary).setEmoji("🌐"));
+        if (!web && !(message instanceof ChatInputCommandInteraction || message instanceof MessageContextMenuCommandInteraction)) components.push(new ButtonBuilder().setLabel("Use web search").setCustomId("retry_web_search").setStyle(ButtonStyle.Secondary).setEmoji("🌐"));
         if (ai_thought.trim().length) components.push(new ButtonBuilder().setLabel("Show reasoning").setCustomId("show_reasoning").setStyle(ButtonStyle.Secondary).setEmoji("💡"));
 
         const ai_response_splits = splitter(ai_response.trim()).map(e => e.trim() ?? "_ _");
 
-        if (await reply instanceof Message && message instanceof ChatInputCommandInteraction && ephemeral && replies.length > 1) {
+        if (await reply instanceof Message && (message instanceof ChatInputCommandInteraction || message instanceof MessageContextMenuCommandInteraction) && ephemeral && replies.length > 1) {
             await message.editReply({
                 message: (await reply).id, content: `${replies.length == 1 ? "-# AI response:\n" : ""}${ai_response_splits[replies.length - 1]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds,
                 ...((components.length && ai_response_splits.length == replies.length) ? { components: [(new ActionRowBuilder().addComponents(...components).toJSON())] } : {}),
@@ -136,7 +137,7 @@ export default {
 
         while (ai_response_splits.length > replies.length) {
             if (ai_response_splits.length > replies.length) {
-                if (message instanceof ChatInputCommandInteraction) {
+                if (message instanceof ChatInputCommandInteraction || message instanceof MessageContextMenuCommandInteraction) {
                     replies.push(await message.followUp({
                         content: `${ai_response_splits[replies.length]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral,
                         ...((components.length && ai_response_splits.length == (replies.length + 1)) ? { components: [(new ActionRowBuilder().addComponents(...components).toJSON())] } : {}),
@@ -161,14 +162,14 @@ export default {
             }
         }
 
-        // console.log(ai_response);
+        console.log(ai_response);
 
         const reply_ids = [];
         for await (const reply of replies) {
             reply_ids.push(reply.id);
         }
 
-        if (!(message instanceof ChatInputCommandInteraction)) database.write({
+        if (!(message instanceof ChatInputCommandInteraction || message instanceof MessageContextMenuCommandInteraction)) database.write({
             guildId: message.guildId,
             channelId: message.channelId,
             userId: message.author.id,
@@ -177,8 +178,13 @@ export default {
             value: [2, ...reply_ids].join("-")
         });
     },
-    interactionHandler(interaction: ChatInputCommandInteraction) {
-        this.handler(interaction, ["", interaction.options.getString("prompt") ?? ""]);
+    interactionHandler(interaction: ChatInputCommandInteraction | MessageContextMenuCommandInteraction) {
+        if (interaction instanceof ChatInputCommandInteraction) {
+            this.handler(interaction, ["", interaction.options.getString("prompt") ?? ""]);
+        } else {
+            const web = interaction.commandName.includes("web");
+            this.handler(interaction, ["", interaction.targetMessage.content], web ? "web_search" : undefined);
+        }
     },
     buttonIds: ["retry_web_search", "show_reasoning"],
     async buttonHandler(buttonId: string, interaction: ButtonInteraction, rehandle: () => void) {
