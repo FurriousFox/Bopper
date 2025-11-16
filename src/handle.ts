@@ -9,8 +9,8 @@ const commands: {
     examples: string[];
     description: string;
     slash?: SlashCommandBuilder;
-    context?: ContextMenuCommandBuilder;
-    handler: (message: Message, match?: RegExpMatchArray, reason?: string) => void | Promise<void>;
+    context?: ContextMenuCommandBuilder | ContextMenuCommandBuilder[];
+    handler: (message: Message<true>, match?: RegExpMatchArray, reason?: string) => void | Promise<void>;
     interactionHandler?: (interaction: ChatInputCommandInteraction | MessageContextMenuCommandInteraction, match?: RegExpMatchArray) => void | Promise<void>;
     buttonIds: string[];
     buttonHandler: (buttonId: string, interaction: ButtonInteraction, rehandle?: () => void) => void | Promise<void>;
@@ -25,7 +25,7 @@ export async function handleMessage(message: Message | PartialMessage, botPrefix
     if (message.partial) {
         message = await message.fetch();
     }
-    if (!message.guildId || message.author.bot || message.author.system) return;
+    if (!message.inGuild() || !message.guildId || message.author.bot || message.author.system) return;
     if (!isEdit) updateRep(message.guildId, message.author.id, +1);
     if (isEdit) {
         handleDelete(message);
@@ -93,11 +93,17 @@ export function handleInteraction(interaction: Interaction, botPrefix: string | 
 
         commands.find(command => command.slash?.name == interaction.commandName)?.interactionHandler?.(interaction);
     } else if (interaction instanceof MessageContextMenuCommandInteraction) {
-        commands.find(command => command.context?.name == interaction.commandName)?.interactionHandler?.(interaction);
+        commands.find(command => {
+            if (command.context instanceof Array) {
+                return command.context.filter(context => context?.name == interaction.commandName).length > 0;
+            } else {
+                return command.context?.name == interaction.commandName;
+            }
+        })?.interactionHandler?.(interaction);
     } else if (interaction instanceof ButtonInteraction) {
         if (interaction.customId == "public_add") invite(interaction);
         else commands.find(command => command.buttonIds?.includes(interaction.customId))?.buttonHandler?.(interaction.customId, interaction,
-            async () => { try { if (interaction.message.reference) { const ref = await interaction.message.fetchReference(); handleDelete(ref); handleMessage(ref, botPrefix, true, interaction.customId); } } catch (_) {/*  */ } });
+            async () => { try { if (interaction.message.reference) { const ref = await interaction.message.fetchReference(); handleDelete(ref); } } catch (_) {/*  */ console.log(_); } finally { try { handleMessage(await interaction.message.fetchReference(), botPrefix, true, interaction.customId); } catch (_) {/*  */ } } });
     }
 }
 

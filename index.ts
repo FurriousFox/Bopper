@@ -24,7 +24,9 @@ client.once(Events.ClientReady, async readyClient => {
     for (const { name: command } of Deno.readDirSync(path.join(import.meta.dirname ?? "", "./src/commands")).filter(e => e.isFile)) {
         const command_import = (await import(path.join(import.meta.dirname ?? "", "./src/commands/", command))).default;
         if (command_import.slash) commands.push(command_import.slash);
-        if (command_import.context) commands.push(command_import.context);
+        if (command_import.context)
+            if (command_import.context?.length) commands.push(...command_import.context);
+            else commands.push(command_import.context);
     }
 
     const commandHash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(commands.map(e => e.toJSON())))))).map((b) => b.toString(16).padStart(2, "0")).join("");
