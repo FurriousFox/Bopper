@@ -1,4 +1,4 @@
-import { Client, Events, GatewayIntentBits, Partials, Snowflake as _Snowflake, SlashCommandBuilder, Routes, ContextMenuCommandBuilder } from 'discord.js';
+import { Client, Events, GatewayIntentBits, Partials, Snowflake as _Snowflake, SlashCommandBuilder, Routes, ContextMenuCommandBuilder, ActivityType } from 'discord.js';
 import './src/database.ts';
 import './src/metadatabase.ts';
 import { handleMessage, handleInteraction, handleDelete } from "./src/handle.ts";
@@ -18,6 +18,8 @@ let botPrefix: undefined | string;
 client.once(Events.ClientReady, async readyClient => {
     console.log(`Ready! Logged in as ${readyClient.user.tag}`);
     botPrefix = `<@${readyClient.user.id}>`;
+
+    readyClient.user.setActivity('/help', { type: ActivityType.Listening });
 
     lapoTimeout();
 
