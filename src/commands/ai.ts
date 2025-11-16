@@ -138,12 +138,12 @@ export default {
         while (ai_response_splits.length > replies.length) {
             if (ai_response_splits.length > replies.length) {
                 if (message instanceof ChatInputCommandInteraction || message instanceof MessageContextMenuCommandInteraction) {
-                    replies.push(await message.followUp({
+                    replies.push(reply = await message.followUp({
                         content: `${ai_response_splits[replies.length]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral,
                         ...((components.length && ai_response_splits.length == (replies.length + 1)) ? { components: [(new ActionRowBuilder().addComponents(...components).toJSON())] } : {}),
                     }));
                 } else {
-                    replies.push(await message.reply({
+                    replies.push(reply = await message.reply({
                         content: `${ai_response_splits[replies.length]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral,
                         ...((components.length && ai_response_splits.length == (replies.length + 1)) ? { components: [(new ActionRowBuilder().addComponents(...components).toJSON())] } : {}),
                     }));
@@ -162,7 +162,7 @@ export default {
             }
         }
 
-        console.log(ai_response);
+        // console.log(ai_response);
 
         const reply_ids = [];
         for await (const reply of replies) {
