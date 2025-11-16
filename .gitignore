@@ -1,3 +1,4 @@
 !example.env
 bopper.db
+bopper_meta.db
 todo
