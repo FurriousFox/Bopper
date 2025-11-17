@@ -1,0 +1,39 @@
+lapo:
+- lapo (within 15 minutes before midnight ig, because of discord api limits)
+- even if bot isn't in guild, in "private channels" (e.g. group dms) and servers bopper isn't member of (and show a "add Bopper" button)
+- lapo: show "sent at, received at" footnote
+
+/xkcd, xkcd subscribe (channel, dms)
+
+ai convo, react to:
+- replies
+- threads
+
+lapo:
+- if cannot send "W00t", it shouldn't accept the lapo and instead add a cross
+- reply to lapo message instead of just sending it in the channel
+- what if the bot can't add a checkmark --> dm(?)
+
+give rep, streak for non-ephemeral slash commands
+
+streaks:
+- all-time highscore, e.g. `<user>: 14 days (all-time: 72)`
+- should editing a message count?
+
+what happens if you .help in a channel where the bot may read, but not send
+what happens if you add bot, without "bot" permissions?
+
+ai:
+- image input support (tried to get it working, doesn't seem to work properly)
+- /ai model selection
+
+rework bopper itself (e.g. mostly less manual database things)
+
+sed:
+- e.g. .s/something/something else
+- similar to discord's built in feature
+- but with support for regex
+
+context menu commands:
+- select multiple messages for /ai
+- replace all context manu options with first running the command and then applying it using a single button in the context menu(?)
