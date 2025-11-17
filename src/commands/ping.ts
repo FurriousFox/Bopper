@@ -1,4 +1,4 @@
-import { Message, SnowflakeUtil, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, MessageFlags, ContextMenuCommandBuilder, ApplicationCommandType, MessageContextMenuCommandInteraction } from 'discord.js';
+import { Message, SnowflakeUtil, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, MessageFlags, ContextMenuCommandBuilder, ApplicationCommandType, MessageContextMenuCommandInteraction, ApplicationIntegrationType } from 'discord.js';
 
 export default {
     match: /^ping|pong$/,
@@ -55,6 +55,7 @@ export default {
             if (nonce) response += `Sent at:            ${new Date(nonce).toISOString()}`;
             response += `\nReceived at:   ${new Date(id).toISOString()}\n`;
             if (nonce) response += `Latency:          ${Math.round((id - nonce))}ms\n`;
+            if (!interaction.authorizingIntegrationOwners[ApplicationIntegrationType.GuildInstall]) response += `\n-# [add Bopper](https://discord.com/oauth2/authorize?client_id=${interaction.applicationId ?? "1395103292899590337"}) to this server to also determine latency (time between sending a message, and the message being received by discord)`;
             if (nonce) response += "\n-# latency: time between sending a message, and the message being received by discord";
 
             await interaction.reply({
