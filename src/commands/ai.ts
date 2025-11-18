@@ -3,12 +3,20 @@ import { ai, splitter, splitter4000 } from "../ai.ts";
 
 export default {
     match: /^ai (.+)$/s,
+    matchFunction: function (message: Message) {
+        if ('reference' in message && message.reference?.messageId && (metabase.readAll({
+            property: "ai_context",
+            like: `C%-${message.reference.messageId}-`
+        })?.[0]?.value) !== undefined) {
+            return true;
+        } else return false;
+    },
     command: 'ai <prompt>',
     examples: ["ai Is the sky blue?"],
     description: 'ask ai something',
     slash: new SlashCommandBuilder().setName("ai").setDescription('Ask AI something').addStringOption(option => option.setRequired(true).setName("prompt").setDescription("AI prompt")).addBooleanOption(option => option.setRequired(false).setName("web").setDescription("Search the web")).addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message")).setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel]),
     context: [new ContextMenuCommandBuilder().setName('ai').setType(ApplicationCommandType.Message).setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel]), new ContextMenuCommandBuilder().setName('ai (web search)').setType(ApplicationCommandType.Message).setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel])],
-    async handler(message: Message<true> | ChatInputCommandInteraction | MessageContextMenuCommandInteraction, match: RegExpMatchArray, reason?: string): Promise<void> {
+    async handler(message: Message<true> | ChatInputCommandInteraction | MessageContextMenuCommandInteraction, match: RegExpMatchArray | boolean, reason?: string): Promise<void> {
         const ephemeral = message instanceof ChatInputCommandInteraction ? message.options.getBoolean("ephemeral") ? MessageFlags.Ephemeral : 0 : 0;
 
         let web = (reason == "retry_web_search" || reason == "web_search");
@@ -16,13 +24,24 @@ export default {
             web = !!message.options.getBoolean("web");
         }
 
+        let context: string;
+        let context_a: Array<{ role: "user" | "system" | "assistant", content: string; }> = [];
+        if ('reference' in message && message.reference?.messageId && (context = metabase.readAll({
+            property: "ai_context",
+            like: `C%-${message.reference.messageId}-`
+        })?.[0]?.value) !== undefined) {
+            try {
+                context_a = JSON.parse(context)?.messages;
+                if (!(context_a instanceof Array)) context_a = [];
+            } catch (_) { /*  */ }
+        }
 
         const ai_stream = ai([{
             role: "system",
             content: "Keep the response short. Only use Discord's markdown features, this means no heading 4, no images, no tables and no LaTeX."
-        }, {
+        }, ...context_a, {
             role: "user",
-            content: `${match[1]}`
+            content: `${typeof match == "boolean" ? (message as Message).content : match[1]}`
         }], { web });
 
         const replies: (typeof reply)[] = [];
@@ -138,12 +157,12 @@ export default {
         while (ai_response_splits.length > replies.length) {
             if (ai_response_splits.length > replies.length) {
                 if (message instanceof ChatInputCommandInteraction || message instanceof MessageContextMenuCommandInteraction) {
-                    replies.push(reply = await message.followUp({
+                    replies.push(reply = message.followUp({
                         content: `${ai_response_splits[replies.length]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral,
                         ...((components.length && ai_response_splits.length == (replies.length + 1)) ? { components: [(new ActionRowBuilder().addComponents(...components).toJSON())] } : {}),
                     }));
                 } else {
-                    replies.push(reply = await message.reply({
+                    replies.push(reply = message.reply({
                         content: `${ai_response_splits[replies.length]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral,
                         ...((components.length && ai_response_splits.length == (replies.length + 1)) ? { components: [(new ActionRowBuilder().addComponents(...components).toJSON())] } : {}),
                     }));
@@ -168,6 +187,21 @@ export default {
         for await (const reply of replies) {
             reply_ids.push(reply.id);
         }
+
+        metabase.write({
+            guildId: message.guildId!,
+            channelId: message.channelId,
+            userId: message instanceof Message ? message.author.id : message.user.id,
+            messageId: `-${message.id}-${reply_ids.join("-")}-`,
+            property: "ai_context",
+            value: JSON.stringify({
+                messages: [
+                    ...context_a,
+                    { role: "user", content: `${typeof match == "boolean" ? (message as Message).content : match[1]}` },
+                    { role: "assistant", content: ai_response }
+                ]
+            })
+        });
 
         if (!(message instanceof ChatInputCommandInteraction || message instanceof MessageContextMenuCommandInteraction)) database.write({
             guildId: message.guildId,
