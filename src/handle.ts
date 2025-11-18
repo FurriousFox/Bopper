@@ -3,18 +3,20 @@ import path from "node:path";
 import { Message, PartialMessage, SlashCommandBuilder, Interaction, ChatInputCommandInteraction, ContextMenuCommandBuilder, MessageContextMenuCommandInteraction, ButtonInteraction } from "discord.js";
 import { invite } from './invite.ts';
 
-const commands: {
+type command = {
     match: RegExp;
+    matchFunction?: (message: Message) => boolean;
     command: string;
     examples: string[];
     description: string;
     slash?: SlashCommandBuilder;
     context?: ContextMenuCommandBuilder | ContextMenuCommandBuilder[];
-    handler: (message: Message<true>, match?: RegExpMatchArray, reason?: string) => void | Promise<void>;
+    handler: (message: Message<true>, match?: RegExpMatchArray | true, reason?: string) => void | Promise<void>;
     interactionHandler?: (interaction: ChatInputCommandInteraction | MessageContextMenuCommandInteraction, match?: RegExpMatchArray) => void | Promise<void>;
     buttonIds: string[];
     buttonHandler: (buttonId: string, interaction: ButtonInteraction, rehandle?: () => void) => void | Promise<void>;
-}[] = [];
+};
+const commands: command[] = [];
 
 for (const { name: command } of Deno.readDirSync(path.join(import.meta.dirname ?? "", "./commands")).filter(e => e.isFile)) {
     commands.push((await import(path.join(import.meta.dirname ?? "", "./commands/", command))).default);
@@ -66,11 +68,19 @@ export async function handleMessage(message: Message | PartialMessage, botPrefix
         property: "prefix",
     });
 
+    let prefixed = true;
     if (!message.content.startsWith(prefix ?? ".")) {
-        if (botPrefix !== undefined) if (message.content.startsWith(botPrefix)) message.content = message.content.substring(botPrefix.length + +(message.content[botPrefix.length] == " ")); else return;
+        if (botPrefix !== undefined) if (message.content.startsWith(botPrefix)) message.content = message.content.substring(botPrefix.length + +(message.content[botPrefix.length] == " "));
+        else prefixed = false; else prefixed = false;
     } else message.content = message.content.substring(1);
 
-    const handlers = commands.map(command => { return { command: command, match: message.content.match(command.match.ignoreCase ? command.match : new RegExp(command.match, `${command.match.flags}i`)) }; }).filter(e => e.match !== null);
+    let handlers: {
+        command: command;
+        match: RegExpMatchArray | true;
+    }[] = [];
+    if (prefixed) handlers = [...handlers, ...commands.map(command => { return { command: command, match: message.content.match(command.match.ignoreCase ? command.match : new RegExp(command.match, `${command.match.flags}i`)) }; }).filter(e => e.match !== null)] as typeof handlers;
+    handlers = [...handlers, ...commands.map(command => { return { command: command, match: command?.matchFunction?.(message) }; }).filter(e => (e.match !== undefined && e.match !== false))] as typeof handlers;
+
     if (handlers.length > 0) database.write({
         guildId: message.guildId,
         channelId: message.channelId,
