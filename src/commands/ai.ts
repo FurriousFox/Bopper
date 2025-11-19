@@ -201,7 +201,7 @@ export default {
             guildId: message.guildId!,
             channelId: message.channelId,
             userId: message instanceof Message ? message.author.id : message.user.id,
-            messageId: `-${message.id}-${reply_ids.join("-")}-`,
+            messageId: `-${reply_ids.join("-")}-`,
             property: "ai_context",
             value: JSON.stringify({
                 messages: [
