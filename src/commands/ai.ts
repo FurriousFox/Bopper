@@ -1,4 +1,4 @@
-import { Message, MessageFlags, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, InteractionResponse, OmitPartialGroupDMChannel, ButtonBuilder, ActionRowBuilder, ButtonStyle, ButtonInteraction, ContextMenuCommandBuilder, ApplicationCommandType, MessageContextMenuCommandInteraction } from 'discord.js';
+import { Message, MessageFlags, SlashCommandBuilder, InteractionContextType, ChatInputCommandInteraction, InteractionResponse, OmitPartialGroupDMChannel, ButtonBuilder, ActionRowBuilder, ButtonStyle, ButtonInteraction, ContextMenuCommandBuilder, ApplicationCommandType, MessageContextMenuCommandInteraction, ContextMenuCommandInteraction, InteractionCallbackResponse } from 'discord.js';
 import { ai, splitter, splitter4000 } from "../ai.ts";
 
 export default {
@@ -18,6 +18,8 @@ export default {
     context: [new ContextMenuCommandBuilder().setName('ai').setType(ApplicationCommandType.Message).setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel]), new ContextMenuCommandBuilder().setName('ai (web search)').setType(ApplicationCommandType.Message).setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel])],
     async handler(message: Message<true> | ChatInputCommandInteraction | MessageContextMenuCommandInteraction, match: RegExpMatchArray | boolean, reason?: string): Promise<void> {
         const ephemeral = message instanceof ChatInputCommandInteraction ? message.options.getBoolean("ephemeral") ? MessageFlags.Ephemeral : 0 : 0;
+        const isInteraction = message instanceof ChatInputCommandInteraction || message instanceof ContextMenuCommandInteraction;
+        const withResponse = isInteraction ? { withResponse: true } : {};
 
         let web = (reason == "retry_web_search" || reason == "web_search");
         if (message instanceof ChatInputCommandInteraction) {
@@ -46,7 +48,7 @@ export default {
 
         const replies: (typeof reply)[] = [];
 
-        let reply: Promise<Message> | Message | Promise<InteractionResponse> | InteractionResponse | Promise<OmitPartialGroupDMChannel<Message>> | OmitPartialGroupDMChannel<Message> = message.reply({ content: `-# AI response:\n_thinking..._`, allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral });
+        let reply: Promise<Message> | Message | Promise<InteractionResponse> | InteractionResponse | Promise<OmitPartialGroupDMChannel<Message>> | OmitPartialGroupDMChannel<Message> = message.reply({ content: `-# AI response:\n_thinking..._`, allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral, ...withResponse });
         replies.push(reply);
 
         if (web) (async () => {
@@ -96,17 +98,17 @@ export default {
                     try {
                         const ai_thought_formatted = ai_thought.split("\n").map(e => e.trim().length ? `-# ${e}` : e).join("\n").trim();
 
-                        if (await reply instanceof Message && (message instanceof ChatInputCommandInteraction || message instanceof MessageContextMenuCommandInteraction) && ephemeral && replies.length > 1) {
+                        if (isInteraction) {
                             await message.editReply({ message: (await reply).id, content: `-# AI response:\n${(thinking || forcedEdit) ? `_thinking..._\n\n${ai_thought_formatted.length > 1900 ? "..." + ai_thought_formatted.slice(-1900) : ai_thought_formatted}` : ""}${(thinking || forcedEdit) ? "" : ai_response_splits[replies.length - 1]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral });
                         } else {
                             await (await reply).edit({ content: `-# AI response:\n${(thinking || forcedEdit) ? `_thinking..._\n\n${ai_thought_formatted.length > 1900 ? "..." + ai_thought_formatted.slice(-1900) : ai_thought_formatted}` : ""}${(thinking || forcedEdit) ? "" : ai_response_splits[replies.length - 1]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral });
                         }
 
                         if (ai_response_splits.length > replies.length) {
-                            if (message instanceof ChatInputCommandInteraction || message instanceof MessageContextMenuCommandInteraction) {
-                                reply = await message.followUp({ content: `${ai_response_splits[replies.length]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral });
+                            if (isInteraction) {
+                                reply = await message.followUp({ content: `${ai_response_splits[replies.length]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral, ...withResponse });
                             } else {
-                                reply = await message.reply({ content: `${ai_response_splits[replies.length]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral });
+                                reply = await message.reply({ content: `${ai_response_splits[replies.length]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral, ...withResponse });
                             }
                             replies.push(reply);
                         }
@@ -124,12 +126,12 @@ export default {
         await canEditPromise;
 
         const components = [];
-        if (!web && !(message instanceof ChatInputCommandInteraction || message instanceof MessageContextMenuCommandInteraction)) components.push(new ButtonBuilder().setLabel("Use web search").setCustomId("retry_web_search").setStyle(ButtonStyle.Secondary).setEmoji("🌐"));
+        if (!web && !isInteraction) components.push(new ButtonBuilder().setLabel("Use web search").setCustomId("retry_web_search").setStyle(ButtonStyle.Secondary).setEmoji("🌐"));
         if (ai_thought.trim().length) components.push(new ButtonBuilder().setLabel("Show reasoning").setCustomId("show_reasoning").setStyle(ButtonStyle.Secondary).setEmoji("💡"));
 
         const ai_response_splits = splitter(ai_response.trim()).map(e => e.trim() ?? "_ _");
 
-        if (await reply instanceof Message && (message instanceof ChatInputCommandInteraction || message instanceof MessageContextMenuCommandInteraction) && ephemeral && replies.length > 1) {
+        if (isInteraction) {
             await message.editReply({
                 message: (await reply).id, content: `${replies.length == 1 ? "-# AI response:\n" : ""}${ai_response_splits[replies.length - 1]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds,
                 ...((components.length && ai_response_splits.length == replies.length) ? { components: [(new ActionRowBuilder().addComponents(...components).toJSON())] } : {}),
@@ -142,11 +144,12 @@ export default {
         }
 
         if (ai_thought.trim().length && components.length && ai_response_splits.length == replies.length) {
+            reply = await reply;
             metabase.write({
                 guildId: message.guildId!,
                 channelId: message.channelId,
                 userId: message instanceof Message ? message.author.id : message.user.id,
-                messageId: `${(await reply).id}`,
+                messageId: `${(reply instanceof InteractionCallbackResponse && reply.resource?.message?.id) ? reply.resource.message.id : reply.id}`,
                 property: "reasoning",
                 value: ai_thought
             });
@@ -156,24 +159,27 @@ export default {
 
         while (ai_response_splits.length > replies.length) {
             if (ai_response_splits.length > replies.length) {
-                if (message instanceof ChatInputCommandInteraction || message instanceof MessageContextMenuCommandInteraction) {
+                if (isInteraction) {
                     replies.push(reply = message.followUp({
                         content: `${ai_response_splits[replies.length]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral,
+                        ...withResponse,
                         ...((components.length && ai_response_splits.length == (replies.length + 1)) ? { components: [(new ActionRowBuilder().addComponents(...components).toJSON())] } : {}),
                     }));
                 } else {
                     replies.push(reply = message.reply({
                         content: `${ai_response_splits[replies.length]}`.slice(0, 2000), allowedMentions: {}, flags: MessageFlags.SuppressEmbeds | ephemeral,
+                        ...withResponse,
                         ...((components.length && ai_response_splits.length == (replies.length + 1)) ? { components: [(new ActionRowBuilder().addComponents(...components).toJSON())] } : {}),
                     }));
                 }
 
                 if (ai_thought.trim().length && components.length && ai_response_splits.length == replies.length) {
+                    reply = await reply;
                     metabase.write({
                         guildId: message.guildId!,
                         channelId: message.channelId,
                         userId: message instanceof Message ? message.author.id : message.user.id,
-                        messageId: `${(await reply).id}`,
+                        messageId: `${(reply instanceof InteractionCallbackResponse && reply.resource?.message?.id) ? reply.resource.message.id : reply.id}`,
                         property: "reasoning",
                         value: ai_thought
                     });
@@ -185,7 +191,10 @@ export default {
 
         const reply_ids = [];
         for await (const reply of replies) {
-            reply_ids.push(reply.id);
+            if (reply instanceof InteractionCallbackResponse && reply.resource?.message?.id)
+                reply_ids.push(reply.resource.message.id);
+            else
+                reply_ids.push(reply.id);
         }
 
         metabase.write({
@@ -203,7 +212,7 @@ export default {
             })
         });
 
-        if (!(message instanceof ChatInputCommandInteraction || message instanceof MessageContextMenuCommandInteraction)) database.write({
+        if (!isInteraction) database.write({
             guildId: message.guildId,
             channelId: message.channelId,
             userId: message.author.id,
@@ -231,8 +240,8 @@ export default {
                 } catch (_) {/*  */ }
                 break;
             case "show_reasoning":
-                if (metabase.readAll({ property: "reasoning", like: `C${interaction.message.interactionMetadata?.id ?? interaction.message.id}` }).length) {
-                    const reasoning = metabase.readAll({ property: "reasoning", like: `C${interaction.message.interactionMetadata?.id ?? interaction.message.id}` })[0].value;
+                if (metabase.readAll({ property: "reasoning", like: `C${interaction.message.id}` }).length) {
+                    const reasoning = metabase.readAll({ property: "reasoning", like: `C${interaction.message.id}` })[0].value;
                     const reasoning_splits = splitter4000(reasoning.trim()).filter(e => e.trim()).map(e => e.trim() ?? "_ _");
 
                     let a: "reply" | "followUp" = "reply";
