@@ -1,8 +1,9 @@
 import { Snowflake } from 'discord.js';
 import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
+import dev from "./dev.ts";
 
-const db = new DatabaseSync(path.join(import.meta.dirname ?? "", "../bopper_meta.db"));
+const db = new DatabaseSync(path.join(import.meta.dirname ?? "", dev ? "../bopper_dev_meta.db" : "../bopper_meta.db"));
 
 export type readFunction = (options: {
     guildId: Snowflake;

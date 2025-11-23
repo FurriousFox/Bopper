@@ -90,7 +90,9 @@ export async function handleMessage(message: Message | PartialMessage, botPrefix
         value: 1
     });
     for (const { command: { handler }, match } of handlers) {
-        await handler(message, match!, reason);
+        try {
+            await handler(message, match!, reason);
+        } catch (e) { console.log(e); }
     }
 };
 

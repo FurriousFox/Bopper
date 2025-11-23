@@ -9,6 +9,7 @@ lapo:
 ai convo, react to:
 - replies
 - threads
+- replying to a message with ,ai (recursively fetching, maybe even adding surrounding messages? storing all messages in metabase??)
 
 lapo:
 - if cannot send "W00t", it shouldn't accept the lapo and instead add a cross
@@ -45,3 +46,9 @@ context menu commands:
 - corrects people, uses ai to detect, correct and explain the grammatical error/spelling mistakes
 
 /coinflip
+
+add a simple (local, privacy preserving) embedding models to detect negative messages about Bopper and reduce rep points (just for fun with friends)
+
+uptime
+
+reloading commands without restart
