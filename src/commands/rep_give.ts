@@ -6,6 +6,7 @@ export default {
     command: 'rep give <user> <amount>',
     examples: ['rep give @Bopper 10'],
     description: 'gift rep points to someone else',
+    slashName: "rep give",
     handler(message: Message, match: RegExpMatchArray): void {
         let lowrep: number;
         if ((lowrep = getRep(message.guildId!, message.author.id)) < parseInt(match[2])) {

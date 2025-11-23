@@ -7,6 +7,7 @@ export default {
     examples: [],
     description: 'show leaderboard for streaks',
     slash: new SlashCommandBuilder().setName("streak").setDescription('Show leaderboard for streaks').addSubcommand(command => command.setName("stats").setDescription('Show leaderboard for streaks').addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message"))).setContexts([InteractionContextType.Guild]),
+    slashName: "streak stats",
     async handler(message: Message | ChatInputCommandInteraction): Promise<void> {
         const ephemeral = message instanceof ChatInputCommandInteraction ? !!message.options.getBoolean("ephemeral") : false;
 

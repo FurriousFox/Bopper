@@ -5,6 +5,7 @@ export default {
     command: 'repstats',
     examples: [],
     description: 'show leaderboard for rep points',
+    slashName: "rep stats",
     async handler(message: Message): Promise<void> {
         const members = message.guild!.members.cache;
 

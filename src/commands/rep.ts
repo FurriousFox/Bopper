@@ -8,6 +8,7 @@ export default {
     examples: ['rep', 'rep @Bopper'],
     description: 'check rep balance',
     slash: new SlashCommandBuilder().setName("rep").setDescription('Check rep balance or gift rep points').addSubcommand(command => command.setName("bal").setDescription('Check rep balance').addUserOption(option => option.setRequired(false).setName("user").setDescription("User to check balance for")).addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message"))).addSubcommand(command => command.setName("stats").setDescription('Show leaderboard for rep points').addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message"))).addSubcommand(command => command.setName("give").setDescription('Give someone (part of) your rep points').addUserOption(option => option.setRequired(true).setName("user").setDescription("User to give rep points")).addIntegerOption(option => option.setRequired(true).setName("amount").setDescription("Amount of rep points to give").setMinValue(0))).setContexts([InteractionContextType.Guild]),
+    slashName: "rep bal",
     async handler(message: Message, match: RegExpMatchArray): Promise<void> {
         let reply;
         if (match[2]) {
