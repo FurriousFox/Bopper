@@ -2,6 +2,10 @@
 
 a Discord bot to boost engagement, keeping the community active
 
+## Demo video
+
+[Bopper demo week 11](https://youtu.be/UVX9fiYHZY0)
+
 ## Features
 
 - reputation (you gain 1 rep point / message, it's also possible to gift rep points to other users)
