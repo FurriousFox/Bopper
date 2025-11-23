@@ -1,6 +1,6 @@
 import { TextDisplayBuilder, MediaGalleryItemBuilder, MediaGalleryBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 
-type xkcd = {
+type xkcd_success = {
     year: string;
     month: string;
     day: string;
@@ -20,7 +20,9 @@ type xkcd = {
 
     error?: true;
     latest?: xkcd;
-} | {
+};
+
+type xkcd = xkcd_success | {
     num: number;
     latest: xkcd;
 
@@ -47,7 +49,7 @@ export default {
         }
     },
 
-    components(comic: xkcd) {
+    async components(comic: xkcd) {
         if (comic.error) {
             if (!comic.latest?.error && comic.latest!.num < comic.num) return [
                 new TextDisplayBuilder()
@@ -72,14 +74,24 @@ _ _   / \\
 Some unknown error occurred, xkcd is probably down, but if it isn't, https://xkcd.com/2200/.`)
             ].map(component => component.toJSON());
         }
-        else return [
-            new TextDisplayBuilder().setContent(`## xkcd ${comic.num}: ${comic.title}`),
-            new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(comic.img)),
-            new TextDisplayBuilder().setContent(comic.alt),
-            new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setLabel('View on xkcd').setStyle(ButtonStyle.Link).setURL(`https://xkcd.com/${comic.num}/`),
-                new ButtonBuilder().setLabel('Explanation').setStyle(ButtonStyle.Link).setURL(`https://explainxkcd.com/${comic.num}`)
-            ),
-        ].map(component => component.toJSON());
+        else {
+            try {
+                const url_splits = (comic as xkcd_success).img.split(".");
+                url_splits[url_splits.length - 2] += "_2x";
+                const x2_url = url_splits.join(".");
+
+                if ((await fetch(x2_url, { method: "HEAD" })).status == 200) comic.img = x2_url;
+            } catch (_) { /*  */ }
+
+            return [
+                new TextDisplayBuilder().setContent(`## xkcd ${comic.num}: ${comic.title}`),
+                new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(comic.img)),
+                new TextDisplayBuilder().setContent(comic.alt),
+                new ActionRowBuilder().addComponents(
+                    new ButtonBuilder().setLabel('View on xkcd').setStyle(ButtonStyle.Link).setURL(`https://xkcd.com/${comic.num}/`),
+                    new ButtonBuilder().setLabel('Explanation').setStyle(ButtonStyle.Link).setURL(`https://explainxkcd.com/${comic.num}`)
+                ),
+            ].map(component => component.toJSON());
+        }
     }
 };

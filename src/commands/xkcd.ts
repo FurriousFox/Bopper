@@ -44,7 +44,7 @@ export default {
         }
 
         return interaction.reply({
-            components: xkcd.components(comic ?? await xkcd.latest()),
+            components: await xkcd.components(comic ?? await xkcd.latest()),
             flags: MessageFlags.IsComponentsV2 | ephemeral
         });
     }
