@@ -1,0 +1,7 @@
+{
+  "imports": {
+    "nodemw": "npm:nodemw@^0.25.0",
+    "typesense": "npm:typesense@^2.1.0",
+    "wtf_wikipedia": "npm:wtf_wikipedia@^10.4.0"
+  }
+}

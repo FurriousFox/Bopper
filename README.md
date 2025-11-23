@@ -35,4 +35,25 @@ Use `/help` or `.help` to get started
     deno run --env-file -A ./index.ts
     ```
 
+## xkcd search
+
+1. modify `xkcd/example.env` with your token and rename it to `xkcd/.env`
+2. update the xkcd and xkcd-explain index by running
+
+    ```sh
+    cd xkcd/src/
+
+    # start typesense server
+    docker compose -f docker-compose.yml up -d --build
+
+    # update index
+    deno run -A initial_fetch.ts
+    deno run -A initial_fetch_explain.ts
+
+    # add index to typesense
+    deno run -A add.ts
+    ```
+
+3. no automatic updating of the index is implemented yet, re-run these commands once a while to update the search index
+
 <sup><sub>AI usage: No AI is used, except to generate the profile picture</sup></sub>

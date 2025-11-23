@@ -1,6 +1,7 @@
 import { TextDisplayBuilder, MediaGalleryItemBuilder, MediaGalleryBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import typesense_search from "./xkcd_search.ts";
 
-type xkcd_success = {
+export type xkcd_success = {
     year: string;
     month: string;
     day: string;
@@ -22,7 +23,7 @@ type xkcd_success = {
     latest?: xkcd;
 };
 
-type xkcd = xkcd_success | {
+export type xkcd = xkcd_success | {
     num: number;
     latest: xkcd;
 
@@ -50,8 +51,19 @@ export default {
     },
 
     async components(comic: xkcd) {
-        if (comic.error) {
-            if (!comic.latest?.error && comic.latest!.num < comic.num) return [
+        if ((comic as unknown) == 1 || comic.error) {
+            if ((comic as unknown) == 1) return [
+                new TextDisplayBuilder()
+                    .setContent(`
+_ _    O
+_ _   /|\\
+_ _   / \\
+This comic doesn't exist.
+
+
+*Or, more likely, the search engine failed you.*
+`)
+            ].map(component => component.toJSON()); else if (!comic.latest?.error && comic.latest!.num < comic.num) return [
                 new TextDisplayBuilder()
                     .setContent(`
 _ _    O
@@ -93,5 +105,11 @@ Some unknown error occurred, xkcd is probably down, but if it isn't, https://xkc
                 ),
             ].map(component => component.toJSON());
         }
+    },
+
+    async search(query: string): Promise<xkcd> {
+        const result = (await typesense_search(query))?.[0]?.[0];
+        if (!result) return 1 as unknown as xkcd;
+        return this.xkcd((await typesense_search(query))[0][0]);
     }
 };

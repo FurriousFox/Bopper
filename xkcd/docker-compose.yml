@@ -1,0 +1,34 @@
+services:
+  typesense:
+    image: typesense/typesense:29.0
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:8108:8108"
+    volumes:
+      - ./typesense-data:/data
+    command: "--data-dir /data --api-key=${TYPESENSE_API_KEY}"
+  typesense-health:
+    image: curlimages/curl:latest
+    restart: always
+    command: ["sleep", "infinity"]
+    stop_signal: SIGINT
+    stop_grace_period: 1s
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://typesense:8108/health || exit 1"]
+      interval: 5s
+      timeout: 2s
+      retries: 12
+      start_period: 5s
+  # deno:
+  #   image: denoland/deno:latest
+  #   restart: always
+  #   volumes:
+  #     - ./src/:/app
+  #     - ./.env:/.env
+  #   working_dir: /app
+  #   command: "deno run -A --env-file=/.env /app/index.ts"
+  #   depends_on:
+  #     typesense-health:
+  #       condition: service_healthy

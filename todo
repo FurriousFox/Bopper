@@ -4,7 +4,12 @@ lapo:
 - lapo: show "sent at, received at" footnote
 - set timezone
 
-/xkcd, xkcd subscribe (channel, dms)
+/xkcd, xkcd subscribe (channel, dms):
+- automatically update the xkcd search database incremetally whenever xkcd comic releases or explainxkcd gets updated
+- search: if nothing found, try fallback on a bigger part of the explainxkcd content
+- search: implement autocomplete
+
+improve member cache (seperate the guild await and member fetch)
 
 ai convo, react to:
 - replies

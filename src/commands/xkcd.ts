@@ -39,7 +39,9 @@ export default {
                 break;
 
             case "search": {
-                return interaction.reply("not implemented yet");
+                const query = interaction.options.getString("query", true);
+                comic = await xkcd.search(query);
+                break;
             }
         }
 
