@@ -6,7 +6,7 @@ export default {
     examples: [],
     description: 'show leaderboard for rep points',
     async handler(message: Message): Promise<void> {
-        const members = await message.guild!.members.fetch();
+        const members = message.guild!.members.cache;
 
         const reps = database.readAll({
             like: `${message.guildId}A`,

@@ -13,6 +13,12 @@ const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions],
     partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
+globalThis.client = client;
+declare global {
+    var client: Client;
+}
+import './src/member_cache.ts';
+
 
 let botPrefix: undefined | string;
 client.once(Events.ClientReady, async readyClient => {

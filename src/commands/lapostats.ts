@@ -14,7 +14,7 @@ export default {
         }) ?? ".";
         const ephemeral = message instanceof ChatInputCommandInteraction ? !!message.options.getBoolean("ephemeral") : false;
 
-        const members = await message.guild!.members.fetch();
+        const members = message.guild!.members.cache;
         const lapos = database.readAll({
             like: `${message.guildId}A`,
             property: "lapos",

@@ -54,7 +54,7 @@ export default {
                 interaction.reply({ content: `Can't give rep points to users outside of this discord server!`, allowedMentions: { users: [] } });
             }
         } else if (interaction.options.getSubcommand(true) === "stats") {
-            const members = await interaction.guild!.members.fetch();
+            const members = interaction.guild!.members.cache;
 
             const reps = database.readAll({
                 like: `${interaction.guildId}A`,

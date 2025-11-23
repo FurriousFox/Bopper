@@ -24,6 +24,8 @@ for (const { name: command } of Deno.readDirSync(path.join(import.meta.dirname ?
 
 
 export async function handleMessage(message: Message | PartialMessage, botPrefix: string | undefined, isEdit = false, reason?: string) {
+    await membersFetch(message.guildId);
+
     if (message.partial) {
         message = await message.fetch();
     }
@@ -96,7 +98,9 @@ export async function handleMessage(message: Message | PartialMessage, botPrefix
     }
 };
 
-export function handleInteraction(interaction: Interaction, botPrefix: string | undefined) {
+export async function handleInteraction(interaction: Interaction, botPrefix: string | undefined) {
+    await membersFetch(interaction.guildId);
+
     if (interaction instanceof ChatInputCommandInteraction) { // slash command
         /*
             group dm / generic dms / dms with the bot: guildId == null

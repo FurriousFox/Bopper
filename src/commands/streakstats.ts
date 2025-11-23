@@ -10,7 +10,7 @@ export default {
     async handler(message: Message | ChatInputCommandInteraction): Promise<void> {
         const ephemeral = message instanceof ChatInputCommandInteraction ? !!message.options.getBoolean("ephemeral") : false;
 
-        const members = await message.guild!.members.fetch();
+        const members = message.guild!.members.cache;
 
         const streaks = database.readAll({
             like: `${message.guildId}A`,
