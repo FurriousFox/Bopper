@@ -1,16 +1,15 @@
 import { Client } from 'discord.js';
 
-const guildsFetched: Record<string, Promise<unknown>> = {};
+const guildMembersFetched: Record<string, Promise<unknown>> = {};
 async function members_fetch_fun(guildId: string | null) {
     try {
         if (!guildId) return;
         if (!(globalThis.client instanceof Client)) return console.log("fetching members without client!");
         if (!globalThis.client.isReady()) return console.log("fetching members while client not ready!");
 
-        if (!Object.hasOwn(guildsFetched, guildId))
-            guildsFetched[guildId] = globalThis.client.guilds.fetch(guildId);
+        if (!Object.hasOwn(guildMembersFetched, guildId)) guildMembersFetched[guildId] = (await globalThis.client.guilds.fetch(guildId)).members.fetch();
 
-        await guildsFetched[guildId].catch(_ => { return; });
+        await guildMembersFetched[guildId].catch(_ => { return; });
     } catch (_) { return; };
 };
 

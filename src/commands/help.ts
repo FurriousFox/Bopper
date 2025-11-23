@@ -34,7 +34,6 @@ const help = {
                 if (!command.options.filter(e => e.type == ApplicationCommandOptionType.Subcommand).length) return [[command.name, command.id]];
                 return [[command.name, command.id], ...command.options.filter(e => e.type == ApplicationCommandOptionType.Subcommand).map(e => [`${command.name} ${e.name}`, command.id])];
             }).flat();
-            console.log(commands_registered_names);
         }
 
 
