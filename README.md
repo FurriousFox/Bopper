@@ -5,6 +5,7 @@ a Discord bot to boost engagement, keeping the community active
 ## Demo video
 
 [Bopper demo week 11](https://youtu.be/UVX9fiYHZY0)
+[Bopper demo week 13](https://youtu.be/dzF8Elj4WAA)
 
 ## Features
 
