@@ -2,6 +2,7 @@ import { updateRep } from './rep.ts';
 import path from "node:path";
 import { Message, PartialMessage, SlashCommandBuilder, Interaction, ChatInputCommandInteraction, ContextMenuCommandBuilder, MessageContextMenuCommandInteraction, ButtonInteraction } from "discord.js";
 import { invite } from './invite.ts';
+import t_search from './xkcd_search.ts';
 
 type command = {
     match: RegExp;
@@ -120,6 +121,9 @@ export async function handleInteraction(interaction: Interaction, botPrefix: str
         if (interaction.customId == "public_add") invite(interaction);
         else commands.find(command => command.buttonIds?.includes(interaction.customId))?.buttonHandler?.(interaction.customId, interaction,
             async () => { try { if (interaction.message.reference) { const ref = await interaction.message.fetchReference(); handleDelete(ref); } } catch (_) {/*  */ console.log(_); } finally { try { handleMessage(await interaction.message.fetchReference(), botPrefix, true, interaction.customId); } catch (_) {/*  */ } } });
+    } else if (interaction.isAutocomplete()) {
+        const query = interaction.options.get("query", true);
+        await interaction.respond((await t_search((query.value?.toString()) ?? "")).map((choice) => ({ name: `#${choice[0]}: ${choice[1]}`, value: choice[1] })));
     }
 }
 

@@ -7,7 +7,8 @@ lapo:
 /xkcd, xkcd subscribe (channel, dms):
 - automatically update the xkcd search database incremetally whenever xkcd comic releases or explainxkcd gets updated
 - search: if nothing found, try fallback on a bigger part of the explainxkcd content
-- search: implement autocomplete
+- subscribing to new xkcds
+- better embedding model??
 
 improve member cache (seperate the guild await and member fetch)
 

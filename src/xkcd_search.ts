@@ -82,6 +82,6 @@ export default async function (query: string): Promise<[number, string][]> {
     }
 
     const hits = (await searchComics(query ?? "")).hits!;
-    console.log(hits.map(e => [(e.document as xkcd).num, (e.document as xkcd).title]));
+    // console.log(hits.map(e => [(e.document as xkcd).num, (e.document as xkcd).title]));
     return hits.map(e => [(e.document as xkcd).num, (e.document as xkcd).title]);
 }
