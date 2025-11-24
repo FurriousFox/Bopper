@@ -28,7 +28,9 @@ function selectModel({ web = false }): [string, boolean] {
         const text_models = models.filter(e => (e.architecture.output_modalities.length == 1 && e.architecture.output_modalities[0] == "text"));
 
         if (web && text_models.filter(e => (e.supported_parameters.includes("tools") && +e.pricing.web_search))[0]) {
-            return [text_models.filter(e => (e.supported_parameters.includes("tools") && +e.pricing.web_search))[0].id, true];
+            const web_models = text_models.filter(e => (e.supported_parameters.includes("tools") && +e.pricing.web_search));
+            web_models.sort((a, b) => (+a?.pricing?.completion) - (+b?.pricing?.completion));
+            return [web_models[0].id, true];
         } else if (text_models.find(e => e.id == "openai/gpt-oss-120b")) {
             return [text_models.find(e => e.id == "openai/gpt-oss-120b")!.id, false];
         } else if (text_models.length) {
