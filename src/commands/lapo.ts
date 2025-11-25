@@ -1,4 +1,4 @@
-import { Message, SnowflakeUtil, ChatInputCommandInteraction, SlashCommandBuilder, InteractionContextType, ApplicationIntegrationType } from 'discord.js';
+import { Message, SnowflakeUtil, ChatInputCommandInteraction, SlashCommandBuilder, InteractionContextType, ApplicationIntegrationType, ChannelType } from 'discord.js';
 import { invite_ephemeral } from "../invite.ts";
 
 export default {
@@ -8,6 +8,11 @@ export default {
     description: '**la**st **po**st of the day',
     slash: new SlashCommandBuilder().setName("lapo").setDescription('last post of the day').setContexts([InteractionContextType.Guild]),
     handler(message: Message): void {
+        if (message.channel.type === ChannelType.PrivateThread) {
+            message.react('❌');
+            return;
+        }
+
         const date = `${new Date(message.editedTimestamp ?? SnowflakeUtil.timestampFrom(message.id)).getDate()}D${new Date(message.editedTimestamp ?? SnowflakeUtil.timestampFrom(message.id)).getFullYear()}D${new Date(message.editedTimestamp ?? SnowflakeUtil.timestampFrom(message.id)).getMonth()}`;
         database.write({
             guildId: message.guildId!,
@@ -36,9 +41,13 @@ export default {
         }
 
         const reply_fetch = await (await interaction.reply("‎")).fetch();
+        if (reply_fetch.channel.type === ChannelType.PrivateThread) {
+            reply_fetch.react('❌');
+            return;
+        }
 
         const date = `${new Date(SnowflakeUtil.timestampFrom(interaction.id)).getDate()}D${new Date(SnowflakeUtil.timestampFrom(interaction.id)).getFullYear()}D${new Date(SnowflakeUtil.timestampFrom(interaction.id)).getMonth()}`;
-        await reply_fetch.react('✅');
+        reply_fetch.react('✅');
         database.write({
             guildId: interaction.guildId!,
             channelId: interaction.channelId,
