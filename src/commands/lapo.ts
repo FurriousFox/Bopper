@@ -8,22 +8,21 @@ export default {
     description: '**la**st **po**st of the day',
     slash: new SlashCommandBuilder().setName("lapo").setDescription('last post of the day').setContexts([InteractionContextType.Guild]),
     handler(message: Message): void {
+        const date = `${new Date(message.editedTimestamp ?? SnowflakeUtil.timestampFrom(message.id)).getDate()}D${new Date(message.editedTimestamp ?? SnowflakeUtil.timestampFrom(message.id)).getFullYear()}D${new Date(message.editedTimestamp ?? SnowflakeUtil.timestampFrom(message.id)).getMonth()}`;
         if (message.channel.type === ChannelType.PrivateThread) {
             message.react('❌');
-            return;
+        } else {
+            database.write({
+                guildId: message.guildId!,
+                channelId: message.channelId,
+                userId: message.author.id,
+                messageId: message.id,
+                property: `lapo${date}`,
+                value: `${+(new Date(message.editedTimestamp ?? SnowflakeUtil.timestampFrom(message.id)))}`
+            });
+
+            message.react('✅');
         }
-
-        const date = `${new Date(message.editedTimestamp ?? SnowflakeUtil.timestampFrom(message.id)).getDate()}D${new Date(message.editedTimestamp ?? SnowflakeUtil.timestampFrom(message.id)).getFullYear()}D${new Date(message.editedTimestamp ?? SnowflakeUtil.timestampFrom(message.id)).getMonth()}`;
-        database.write({
-            guildId: message.guildId!,
-            channelId: message.channelId,
-            userId: message.author.id,
-            messageId: message.id,
-            property: `lapo${date}`,
-            value: `${+(new Date(message.editedTimestamp ?? SnowflakeUtil.timestampFrom(message.id)))}`
-        });
-
-        message.react('✅');
 
         database.write({
             guildId: message.guildId!,
