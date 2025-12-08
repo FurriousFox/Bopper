@@ -118,6 +118,15 @@ export async function handleInteraction(interaction: Interaction, botPrefix: str
             }
         })?.interactionHandler?.(interaction);
     } else if (interaction instanceof ButtonInteraction) {
+        if (interaction.customId.startsWith("xkcd_interactive_")) {
+            const comic_num = parseInt(interaction.customId.split("_")[2]);
+            const launched = await interaction.launchActivity({
+                withResponse: true,
+            });
+
+            try { await fetch(`http://xkcd.argv.nl/?instance_id=${launched.interaction.activityInstanceId}&c_num=${comic_num}`); } catch (_e) { /*  */ }
+        }
+
         if (interaction.customId == "public_add") invite(interaction);
         else commands.find(command => command.buttonIds?.includes(interaction.customId))?.buttonHandler?.(interaction.customId, interaction,
             async () => { try { if (interaction.message.reference) { const ref = await interaction.message.fetchReference(); handleDelete(ref); } } catch (_) {/*  */ console.log(_); } finally { try { handleMessage(await interaction.message.fetchReference(), botPrefix, true, interaction.customId); } catch (_) {/*  */ } } });

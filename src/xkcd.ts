@@ -95,13 +95,19 @@ Some unknown error occurred, xkcd is probably down, but if it isn't, https://xkc
                 if ((await fetch(x2_url, { method: "HEAD" })).status == 200) comic.img = x2_url;
             } catch (_) { /*  */ }
 
+            const interactive = ((comic.num == 880 || comic.extra_parts) && comic.num != 3074);
+            let alt = comic.alt ?? "";
+            if (interactive) alt += "\n### This is an interactive comic, click the button below to launch it!";
+
+
             return [
                 new TextDisplayBuilder().setContent(`## xkcd ${comic.num}: ${comic.title}`),
-                new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(comic.img)),
-                new TextDisplayBuilder().setContent(comic.alt),
+                ...((comic.img?.length && !comic.img.endsWith("/")) ? [new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(comic.img))] : []),
+                ...(alt?.length ? [new TextDisplayBuilder().setContent(alt)] : []),
                 new ActionRowBuilder().addComponents(
+                    ...(interactive ? [new ButtonBuilder().setLabel('Interactive comic').setStyle(ButtonStyle.Primary).setCustomId('xkcd_interactive_' + comic.num.toString())] : []),
                     new ButtonBuilder().setLabel('View on xkcd').setStyle(ButtonStyle.Link).setURL(`https://xkcd.com/${comic.num}/`),
-                    new ButtonBuilder().setLabel('Explanation').setStyle(ButtonStyle.Link).setURL(`https://explainxkcd.com/${comic.num}`)
+                    new ButtonBuilder().setLabel('Explanation').setStyle(ButtonStyle.Link).setURL(`https://explainxkcd.com/${comic.num}`),
                 ),
             ].map(component => component.toJSON());
         }

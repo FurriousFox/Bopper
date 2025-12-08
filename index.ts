@@ -52,9 +52,35 @@ client.once(Events.ClientReady, async readyClient => {
         });
 
         console.log("updating application commands...");
+
+        try {
+            const existingCommands = await client.rest.get(
+                Routes.applicationCommands(readyClient.user.id)
+            ) as Array<{ id: string; name: string; type: number; }>;
+            const entryPointCommands = existingCommands.filter(cmd => cmd.type === 4);
+
+            for (const cmd of entryPointCommands) {
+                await client.rest.delete(
+                    Routes.applicationCommand(readyClient.user.id, cmd.id)
+                );
+                console.log(`Deleted Entry Point command: ${cmd.name} (${cmd.id})`);
+            }
+        } catch (_e) {
+            console.error(_e);
+        }
+
         client.rest.put(Routes.applicationCommands(readyClient.user.id), { body: commands.map(e => e.toJSON()) }).then(() => {
             console.log('updated application commands!');
-        }).catch(console.error);
+        }).catch((e) => {
+            console.error(e);
+
+            database.write({
+                guildId: "-1",
+                property: "commandsHash",
+                value: "0"
+            });
+        });
+
     }
 });
 

@@ -4,8 +4,9 @@ a Discord bot to boost engagement, keeping the community active
 
 ## Demo video
 
-[Bopper demo week 11](https://youtu.be/UVX9fiYHZY0)
-[Bopper demo week 13](https://youtu.be/dzF8Elj4WAA)
+[Bopper demo week 11](https://youtu.be/UVX9fiYHZY0)  
+[Bopper demo week 12](https://youtu.be/dzF8Elj4WAA)  
+[Bopper demo week 14](https://youtu.be/SFAZkTJjjDU)  
 
 ## Features
 
@@ -56,5 +57,10 @@ Use `/help` or `.help` to get started
     ```
 
 3. no automatic updating of the index is implemented yet, re-run these commands once a while to update the search index
+
+## Interactive xkcd comics
+
+1. For interactive xkcd comics, use the existing [xkcd.argv.nl](https://xkcd.argv.nl) server, or run using the http server in `xkcd_activities` (server.ts)
+2. Add a url mapping for `/` to `xkcd.argv.nl` (or your own server), and enable activities in the discord developer portal
 
 <sup><sub>AI usage: No AI is used, except to generate the profile picture</sup></sub>
