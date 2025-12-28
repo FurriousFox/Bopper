@@ -41,6 +41,14 @@ export default {
         const latest = (await (await fetch("https://xkcd.com/info.0.json")).json()) as xkcd;
         return latest;
     },
+    async latestOrNothing() {
+        try {
+            const latest = (await (await fetch("https://xkcd.com/info.0.json")).json()) as xkcd_success;
+            return latest;
+        } catch (_e) {
+            return undefined;
+        }
+    },
     async xkcd(num: number): Promise<xkcd> {
         try {
             return (await (await fetch(`https://xkcd.com/${num}/info.0.json`)).json()) as xkcd;

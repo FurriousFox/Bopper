@@ -1,6 +1,7 @@
-import { Client, Events, GatewayIntentBits, Partials, Snowflake as _Snowflake, SlashCommandBuilder, Routes, ContextMenuCommandBuilder, ActivityType } from 'discord.js';
+import { Client, Events, GatewayIntentBits, Partials, Snowflake as _Snowflake, SlashCommandBuilder, Routes, ContextMenuCommandBuilder, ActivityType, PermissionsBitField, MessageFlags } from 'discord.js';
 import './src/database.ts';
 import './src/metadatabase.ts';
+import xkcd from './src/xkcd.ts';
 import { handleMessage, handleInteraction, handleDelete } from "./src/handle.ts";
 import { updateLapos } from './src/lapo.ts';
 import process from "node:process";
@@ -118,9 +119,97 @@ function lapoTimeout() {
     }, msTillNextDay + 1000);
 }
 
+async function xkcdInterval() {
+    const comic = await xkcd.latestOrNothing();
+    if (!comic) return console.error("failed to fetch latest xkcd comic");
+    const components = await xkcd.components(comic);
+
+    if (database.read({
+        guildId: "-1",
+        property: "xkcd_num"
+    }) == `${comic.num}`) return;
+    else {
+        database.write({
+            guildId: "-1",
+            property: "xkcd_num",
+            value: `${comic.num}`
+        });
+
+        const xkcds = database.readAll({
+            like: `A`,
+            property: `xkcd`,
+        });
+
+        for (const xkcwii of xkcds) {
+            if (xkcwii.value != "1") continue;
+
+            try {
+                const channelId = xkcwii.key.split("--")[0].split("A").at(-1);
+                const guildId = xkcwii.key.split("A")[0];
+
+                let channel = await (async () => {
+                    try {
+                        if (!channelId) return null;
+                        return await client.channels.fetch(channelId);
+                    } catch (_e) {
+                        return undefined;
+                    }
+                })();
+                if (channel == null || channel.isDMBased() || !channelId) {
+                    channel = await (async () => {
+                        try {
+                            if (!channelId) return null;
+                            return await client.channels.fetch(channelId);
+                        } catch (_e) {
+                            return undefined;
+                        }
+                    })();
+
+                    if (channel == null || channel.isDMBased() || !channelId) {
+                        if (client.isReady()) database.write({
+                            guildId: guildId,
+                            channelId: channelId,
+                            property: "xkcd",
+                            value: "2"
+                        });
+                        return;
+                    }
+                }
+
+                const botPermissions = channel.permissionsFor(channel.guild.members.me!);
+                if (botPermissions?.has(PermissionsBitField.Flags.SendMessages) && channel.isSendable()) {
+                    try {
+                        await channel.send({
+                            components: components,
+                            flags: MessageFlags.IsComponentsV2,
+                            allowedMentions: {}
+                        });
+                    } catch (_e) { /*  */ }
+                } else {
+                    const botPermissions = channel.permissionsFor(channel.guild.members.me!);
+                    if (!botPermissions?.has(PermissionsBitField.Flags.SendMessages) || !channel.isSendable()) {
+                        if (client.isReady()) database.write({
+                            guildId: guildId,
+                            channelId: channelId,
+                            property: "xkcd",
+                            value: "3"
+                        });
+                        return;
+                    }
+                }
+            } catch (_e) {
+                console.error(_e);
+            }
+        }
+    }
+}
+setInterval(xkcdInterval, 60 * 1000);
+
 client.on(Events.MessageCreate, message => handleMessage(message, botPrefix));
 client.on(Events.MessageUpdate, (_oldMessage, message) => handleMessage(message, botPrefix, true));
 client.on(Events.MessageDelete, message => handleDelete(message));
 client.on(Events.InteractionCreate, interaction => handleInteraction(interaction, botPrefix));
+client.on(Events.ClientReady, xkcdInterval);
+
 
 client.login(Deno.env.get("DISCORD_TOKEN"));

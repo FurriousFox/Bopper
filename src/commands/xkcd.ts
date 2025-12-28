@@ -1,12 +1,13 @@
-import { Message, ChatInputCommandInteraction, SlashCommandBuilder, InteractionContextType, MessageFlags } from 'discord.js';
+import { Message, ChatInputCommandInteraction, SlashCommandBuilder, InteractionContextType, MessageFlags, ChannelType } from 'discord.js';
 import xkcd from "../xkcd.ts";
+import xkcd_subscribe from "./xkcd_subscribe.ts";
 
 export default {
-    match: /^xkcd ?(\d+|.+)?$/,
+    match: /^xkcd(?! (?:un)?subscribe) ?(\d+|.+)?$/,
     command: 'xkcd <number>',
     examples: ['xkcd', 'xkcd 2347', 'xkcd Linux', 'xkcd random'],
     description: 'show xkcd comic',
-    slash: new SlashCommandBuilder().setName("xkcd").setDescription('Show xkcd comic').addSubcommand(command => command.setName("random").setDescription('Show random xkcd comic').addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message"))).addSubcommand(command => command.setName("latest").setDescription('Show latest xkcd comic').addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message"))).addSubcommand(command => command.setName("search").setDescription('Search for an xkcd comic').addStringOption(option => option.setRequired(true).setName("query").setDescription("Seach query").setAutocomplete(true)).addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message"))).addSubcommand(command => command.setName("number").setDescription('Show a specific xkcd comic').addIntegerOption(option => option.setRequired(true).setName("number").setDescription("Number of xkcd comic to show").setMinValue(1)).addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message")))/* .addSubcommand(command => command.setName("subscribe").setDescription('Subscribe to daily xkcd comics')) */.setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel]),
+    slash: new SlashCommandBuilder().setName("xkcd").setDescription('Show xkcd comic').addSubcommand(command => command.setName("random").setDescription('Show random xkcd comic').addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message"))).addSubcommand(command => command.setName("latest").setDescription('Show latest xkcd comic').addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message"))).addSubcommand(command => command.setName("search").setDescription('Search for an xkcd comic').addStringOption(option => option.setRequired(true).setName("query").setDescription("Seach query").setAutocomplete(true)).addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message"))).addSubcommand(command => command.setName("number").setDescription('Show a specific xkcd comic').addIntegerOption(option => option.setRequired(true).setName("number").setDescription("Number of xkcd comic to show").setMinValue(1)).addBooleanOption(option => option.setRequired(false).setName("ephemeral").setDescription("Send reponse as ephemeral message"))).addSubcommand(command => command.setName("subscribe").setDescription('Subscribe to xkcd comics').addChannelOption(option => option.setRequired(true).setName("channel").setDescription("Channel to send xkcd comics in as soon as they're released").addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement))).addSubcommand(command => command.setName("unsubscribe").setDescription('Unsubscribe from xkcd comics').addChannelOption(option => option.setRequired(true).setName("channel").setDescription("Channel to *not* send xkcd comics to anymore").addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement))).setContexts([InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel]),
     slashName: "xkcd number",
     async handler(message: Message | ChatInputCommandInteraction, match?: RegExpMatchArray): Promise<void> {
         const ephemeral = message instanceof ChatInputCommandInteraction ? message.options.getBoolean("ephemeral") ? MessageFlags.Ephemeral : 0 : 0;
@@ -77,6 +78,8 @@ export default {
         });
     },
     interactionHandler(interaction: ChatInputCommandInteraction) {
-        this.handler(interaction);
+        const subcommand = interaction.options.getSubcommand(true);
+        if (subcommand == "subscribe" || subcommand == "unsubscribe") xkcd_subscribe.handler(interaction, undefined, subcommand == "unsubscribe");
+        else this.handler(interaction);
     }
 };
