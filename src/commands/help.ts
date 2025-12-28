@@ -11,6 +11,7 @@ for (const { name: command } of Deno.readDirSync(path.join(import.meta.dirname ?
     if (command === "help.ts") continue;
 
     commands.push((await import(path.join(import.meta.dirname ?? "./", command))).default);
+    commands.sort((a, b) => (a.slashName ?? a.slash?.name ?? "").localeCompare(b.slashName ?? b.slash?.name ?? ""));
 }
 
 let commands_registered: Collection<string, ApplicationCommand<{
