@@ -20,6 +20,46 @@ declare global {
 }
 import './src/member_cache.ts';
 
+function shouldAutoReload() {
+    return (Deno.env.get("AUTO_RELOAD") ?? "").toLowerCase().match(/^(1|true|yes|on)$/);
+}
+
+async function setupAutoReload() {
+    if (!shouldAutoReload()) return;
+
+    const watchPaths = [
+        path.join(import.meta.dirname ?? "", "./index.ts"),
+        path.join(import.meta.dirname ?? "", "./src"),
+    ];
+
+    const watcher = Deno.watchFs(watchPaths, { recursive: true });
+    let pendingRestart = false;
+
+    for await (const event of watcher) {
+        if (pendingRestart) continue;
+        if (!event.paths.some(p => p.endsWith(".ts") || p.endsWith(".json"))) continue;
+
+        pendingRestart = true;
+        setTimeout(() => {
+            try {
+                const command = new Deno.Command(Deno.execPath(), {
+                    args: Deno.args,
+                    env: Deno.env.toObject(),
+                    cwd: Deno.cwd(),
+                    stdin: "inherit",
+                    stdout: "inherit",
+                    stderr: "inherit",
+                });
+                command.spawn();
+            } finally {
+                Deno.exit(0);
+            }
+        }, 200);
+    }
+}
+
+setupAutoReload();
+
 
 let botPrefix: undefined | string;
 client.once(Events.ClientReady, async readyClient => {
