@@ -24,7 +24,7 @@ a Discord bot to boost engagement, keeping the community active
 ## Inviting
 
 Add the bot to your own server by using [this link](https://discord.com/oauth2/authorize?client_id=1395103292899590337)  
-Use `/help` or `,help` to get started
+Use `/help` or `<prefix>help` to get started (default prefix is `,`)
 
 ## Running yourself
 
@@ -48,12 +48,33 @@ Examples: `Alice: ,help` or `@alice:matrix.org: ,help`
 
 To debug bridge parsing, set `BRIDGE_DEBUG=1` in your `.env` and watch the console for `[bridge]` logs.
 
-## Matrix handle links
+## Commands
 
-Map a full Matrix ID to a short handle (derived from the localpart), then just type the short handle in chat.
+All commands (slash examples):
 
-- Set: `,link @lennsteenbergen:lennsteenbergen.nl`
-- Use: type `@lennsteenbergen`
+- `/8ball [question]`
+- `/ai <prompt> [web] [ephemeral]`
+- `/coinflip`
+- `/erm <text> [ephemeral]`
+- `/fipo`
+- `/fipostats [ephemeral]`
+- `/help [ephemeral]`
+- `/invite [ephemeral]`
+- `/lapo`
+- `/lapostats [ephemeral]`
+- `/ping [ephemeral]`
+- `/prefix <prefix> [ephemeral]`
+- `/rep bal [user] [ephemeral]`
+- `/rep stats [ephemeral]`
+- `/rep give <user> <amount>`
+- `/streak stats [ephemeral]`
+- `/xkcd latest [ephemeral]`
+- `/xkcd random [ephemeral]`
+- `/xkcd number <number> [ephemeral]`
+- `/xkcd search <query> [ephemeral]`
+- `/xkcd subscribe <channel>`
+- `/xkcd unsubscribe <channel>`
+- `/yp [decimals]`
 
 
 ## xkcd search
