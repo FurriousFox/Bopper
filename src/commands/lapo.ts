@@ -9,9 +9,7 @@ export default {
     slash: new SlashCommandBuilder().setName("lapo").setDescription('last post of the day').setContexts([InteractionContextType.Guild]),
     handler(message: Message): void {
         const date = `${new Date(message.editedTimestamp ?? SnowflakeUtil.timestampFrom(message.id)).getDate()}D${new Date(message.editedTimestamp ?? SnowflakeUtil.timestampFrom(message.id)).getFullYear()}D${new Date(message.editedTimestamp ?? SnowflakeUtil.timestampFrom(message.id)).getMonth()}`;
-        if (message.channel.type === ChannelType.PrivateThread) {
-            message.react('❌');
-        } else {
+        if (message.channel.type !== ChannelType.PrivateThread) {
             database.write({
                 guildId: message.guildId!,
                 channelId: message.channelId,
@@ -21,7 +19,11 @@ export default {
                 value: `${+(new Date(message.editedTimestamp ?? SnowflakeUtil.timestampFrom(message.id)))}`
             });
 
-            message.react('✅');
+            const bridgeSender = (message as Message & { bridgeSender?: string }).bridgeSender;
+            const displayName = bridgeSender
+                ? `@${bridgeSender.replace(/^@/, "")}`
+                : `@${(message.member?.displayName ?? message.author.username)}`;
+            message.channel.send(`W00t ${displayName}!`).catch(() => { });
         }
 
         database.write({
@@ -41,12 +43,10 @@ export default {
 
         const reply_fetch = await (await interaction.reply("‎")).fetch();
         if (reply_fetch.channel.type === ChannelType.PrivateThread) {
-            reply_fetch.react('❌');
             return;
         }
 
         const date = `${new Date(SnowflakeUtil.timestampFrom(interaction.id)).getDate()}D${new Date(SnowflakeUtil.timestampFrom(interaction.id)).getFullYear()}D${new Date(SnowflakeUtil.timestampFrom(interaction.id)).getMonth()}`;
-        reply_fetch.react('✅');
         database.write({
             guildId: interaction.guildId!,
             channelId: interaction.channelId,
@@ -55,6 +55,9 @@ export default {
             property: `lapo${date}`,
             value: `${+(new Date(SnowflakeUtil.timestampFrom(interaction.id)))}`
         });
+
+        const displayName = `@${interaction.user.username}`;
+        reply_fetch.channel.send(`W00t ${displayName}!`).catch(() => { });
 
         database.write({
             guildId: interaction.guildId!,
