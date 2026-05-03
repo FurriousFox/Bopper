@@ -11,7 +11,7 @@ export default {
         const prefix = message instanceof ChatInputCommandInteraction ? '/' : database.read({
             guildId: message.guildId!,
             property: "prefix",
-        }) ?? ".";
+        }) ?? ",";
         const ephemeral = message instanceof ChatInputCommandInteraction ? !!message.options.getBoolean("ephemeral") : false;
 
         const members = message.guild!.members.cache;
@@ -19,7 +19,20 @@ export default {
             like: `${message.guildId}A`,
             property: "fipos",
         });
-        const leaderboard = `## Fipo stats\n${fipos.sort((a, b) => (+b.value) - (+a.value)).map(e => [e.key.split("--")[1], e.value]).filter(e => members.get(e[0])?.user?.bot === false).map(e => `<@${e[0]}>: ${e[1]}`).join("\n")}\n\n-# you gain 1 fipo point when being the first user of the day to use the fipo command\n-# determined by when the message is received by discord (see ${prefix}ping for more info)`;
+        const leaderboard = `## Fipo stats\n${fipos
+            .sort((a, b) => (+b.value) - (+a.value))
+            .map(e => [e.key.split("--")[1], e.value])
+            .filter(e => e[0].startsWith("matrix:") || e[0].startsWith("webhook:") || members.get(e[0])?.user?.bot === false)
+            .map(e => {
+                if (e[0].startsWith("matrix:")) {
+                    const fullId = `@${e[0].replace(/^matrix:/, "")}`;
+                    const shortHandle = database.read({ guildId: message.guildId!, userId: fullId, property: "matrix_links_rev" });
+                    return `${shortHandle ?? fullId}: ${e[1]}`;
+                }
+                if (e[0].startsWith("webhook:")) return `${e[0].replace(/^webhook:/, "")}: ${e[1]}`;
+                return `<@${e[0]}>: ${e[1]}`;
+            })
+            .join("\n")}\n\n-# you gain 1 fipo point when being the first user of the day to use the fipo command\n-# determined by when the message is received by discord (see ${prefix}ping for more info)`;
 
         if (!(message instanceof ChatInputCommandInteraction)) {
             const reply = await message.reply({ content: leaderboard, allowedMentions: {} });
