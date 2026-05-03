@@ -1,3 +1,14 @@
+/xkcd, xkcd subscribe (channel, dms):
+- automatically update the xkcd search database incremetally whenever xkcd comic releases or explainxkcd gets updated
+- search: if nothing found, try fallback on a bigger part of the explainxkcd content
+- subscribing to new xkcds
+- better embedding model??
+
+ai convo, react to:
+- replies
+- threads
+- replying to a message with ,ai (recursively fetching, maybe even adding surrounding messages? storing all messages in metabase??)
+
 lapo:
 - lapo (within 15 minutes before midnight ig, because of discord api limits)
 - even if bot isn't in guild, in "private channels" (e.g. group dms) and servers bopper isn't member of (and show a "add Bopper" button)
