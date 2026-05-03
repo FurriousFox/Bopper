@@ -64,7 +64,7 @@ export async function handleMessage(message: Message | PartialMessage, botPrefix
     const prefix = database.read({
         guildId: message.guildId!,
         property: "prefix",
-    }) ?? ",";
+    }) ?? ".";
 
     const bridgeDebug = (Deno.env.get("BRIDGE_DEBUG") ?? "").toLowerCase().match(/^(1|true|yes|on)$/);
 

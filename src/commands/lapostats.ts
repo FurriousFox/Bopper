@@ -11,7 +11,7 @@ export default {
         const prefix = message instanceof ChatInputCommandInteraction ? '/' : database.read({
             guildId: message.guildId!,
             property: "prefix",
-        }) ?? ",";
+        }) ?? ".";
         const ephemeral = message instanceof ChatInputCommandInteraction ? !!message.options.getBoolean("ephemeral") : false;
 
         const members = message.guild!.members.cache;

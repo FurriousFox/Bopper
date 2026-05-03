@@ -70,7 +70,7 @@ export default {
         const prefix = message instanceof ChatInputCommandInteraction ? '/' : database.read({
             guildId: message.guildId!,
             property: "prefix",
-        }) ?? ",";
+        }) ?? ".";
 
         if (unsub) {
             if (database.read({
