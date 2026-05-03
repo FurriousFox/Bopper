@@ -46,6 +46,11 @@ function extractBridgeSender(content: string, prefix: string) {
     return bridgedMatch ? bridgedMatch[1].trim() : null;
 }
 
+function extractMatrixIdFromSender(sender: string) {
+    const match = sender.match(/@[^\s():]+:[^\s)]+/);
+    return match ? match[0].trim() : null;
+}
+
 
 export async function handleMessage(message: Message | PartialMessage, botPrefix: string | undefined, isEdit = false, reason?: string) {
     await membersFetch(message.guildId);
@@ -64,7 +69,9 @@ export async function handleMessage(message: Message | PartialMessage, botPrefix
     const bridgeDebug = (Deno.env.get("BRIDGE_DEBUG") ?? "").toLowerCase().match(/^(1|true|yes|on)$/);
 
     const isWebhook = !!message.webhookId;
-    const bridgeSender = extractBridgeSender(message.content, prefix);
+    const rawBridgeSender = extractBridgeSender(message.content, prefix);
+    const matrixSenderId = rawBridgeSender ? extractMatrixIdFromSender(rawBridgeSender) : null;
+    const bridgeSender = matrixSenderId ? matrixSenderId.replace(/^@/, "") : rawBridgeSender;
     const commandContent = extractCommandContent(message.content, prefix);
     const isWebhookCommand = isWebhook && commandContent !== null;
 

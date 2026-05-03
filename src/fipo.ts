@@ -27,10 +27,12 @@ export function fipoTimeout(date: string) {
                         if (userId.startsWith("matrix:")) {
                             const fullId = `@${userId.replace(/^matrix:/, "")}`;
                             const shortHandle = database.read({ guildId: serverId as Snowflake, userId: fullId, property: "matrix_links_rev" });
-                            channel.send(`W00t ${shortHandle ?? fullId}!`).catch(console.error);
+                            const handle = shortHandle ?? fullId;
+                            channel.send(`W00t ${handle.startsWith("@") ? handle : `@${handle}`}!`).catch(console.error);
                         } else if (userId.startsWith("webhook:")) {
-                            channel.send(`W00t ${userId.replace(/^webhook:/, "")}!`).catch(console.error);
-                        } else channel.send(`W00t <@${userId}>!`).catch(console.error);
+                            const webhookName = userId.replace(/^webhook:/, "");
+                            channel.send(`W00t ${webhookName.startsWith("@") ? webhookName : `@${webhookName}`}!`).catch(console.error);
+                        }
                     }
                 }).catch(() => { });
             } catch (_e) { /*  */ }
