@@ -1,5 +1,5 @@
 # Bopper
-
+# WIP
 a Discord bot to boost engagement, keeping the community active
 
 ## Demo video
