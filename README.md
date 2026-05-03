@@ -17,14 +17,14 @@ a Discord bot to boost engagement, keeping the community active
 - lapo (last post of the day)
 - lapo leaderboard
 - ping (showing user latency and bot ping)
-- changing command prefix (`.` by default)
+- changing command prefix (`,` by default)
 - streak (send a message every day to keep up your streak)
 - streak leaderboard
 
 ## Inviting
 
 Add the bot to your own server by using [this link](https://discord.com/oauth2/authorize?client_id=1395103292899590337)  
-Use `/help` or `.help` to get started
+Use `/help` or `,help` to get started
 
 ## Running yourself
 
@@ -36,6 +36,25 @@ Use `/help` or `.help` to get started
     deno install
     deno run --env-file -A ./index.ts
     ```
+
+## Matrix bridge passthrough
+
+If your Matrix bridge posts into Discord via a webhook, commands can be forwarded using the garebot-compatible format:
+
+- `<display name>: ,command args`
+- optionally with a leading mention: `<@1234567890> display name: ,command args`
+
+Examples: `Alice: ,help` or `@alice:matrix.org: ,help`
+
+To debug bridge parsing, set `BRIDGE_DEBUG=1` in your `.env` and watch the console for `[bridge]` logs.
+
+## Matrix handle links
+
+Map a full Matrix ID to a short handle (derived from the localpart), then just type the short handle in chat.
+
+- Set: `,link @lennsteenbergen:lennsteenbergen.nl`
+- Use: type `@lennsteenbergen`
+
 
 ## xkcd search
 
