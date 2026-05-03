@@ -31,26 +31,40 @@ client.once(Events.ClientReady, async readyClient => {
     lapoTimeout();
 
     const commands: (SlashCommandBuilder | ContextMenuCommandBuilder)[] = [];
-    for (const { name: command } of Deno.readDirSync(path.join(import.meta.dirname ?? "", "./src/commands")).filter(e => e.isFile)) {
-        const command_import = (await import(path.join(import.meta.dirname ?? "", "./src/commands/", command))).default;
+    const commandMeta: { name: string; mtime: number | null; hasSlash: boolean; hasContext: boolean; }[] = [];
+    const commandsDir = path.join(import.meta.dirname ?? "", "./src/commands");
+    const commandEntries = [...Deno.readDirSync(commandsDir)].filter(e => e.isFile).map(e => e.name).sort();
+    for (const command of commandEntries) {
+        const commandPath = path.join(commandsDir, command);
+        const commandStat = await Deno.stat(commandPath).catch(() => null);
+        const command_import = (await import(commandPath)).default;
+        commandMeta.push({
+            name: command,
+            mtime: commandStat?.mtime?.getTime() ?? null,
+            hasSlash: !!command_import.slash,
+            hasContext: !!command_import.context,
+        });
         if (command_import.slash) commands.push(command_import.slash);
         if (command_import.context)
             if (command_import.context?.length) commands.push(...command_import.context);
             else commands.push(command_import.context);
     }
 
-    const commandHash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(commands.map(e => e.toJSON())))))).map((b) => b.toString(16).padStart(2, "0")).join("");
+    const commandHash = Array.from(new Uint8Array(await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(JSON.stringify({
+            commands: commands.map(e => e.toJSON()),
+            meta: commandMeta,
+        }))
+    ))).map((b) => b.toString(16).padStart(2, "0")).join("");
+
+    const forceUpdate = (Deno.env.get("FORCE_COMMAND_UPDATE") ?? "").toLowerCase().match(/^(1|true|yes|on)$/);
 
     if (database.read({
         guildId: "-1",
         property: "commandsHash"
-    }) == commandHash) return;
+    }) == commandHash && !forceUpdate) return;
     else {
-        database.write({
-            guildId: "-1",
-            property: "commandsHash",
-            value: commandHash
-        });
 
         console.log("updating application commands...");
 
@@ -71,6 +85,11 @@ client.once(Events.ClientReady, async readyClient => {
         }
 
         client.rest.put(Routes.applicationCommands(readyClient.user.id), { body: commands.map(e => e.toJSON()) }).then(() => {
+            database.write({
+                guildId: "-1",
+                property: "commandsHash",
+                value: commandHash
+            });
             console.log('updated application commands!');
         }).catch((e) => {
             console.error(e);
