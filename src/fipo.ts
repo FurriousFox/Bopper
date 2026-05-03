@@ -23,7 +23,15 @@ export function fipoTimeout(date: string) {
 
             try {
                 client.channels.fetch(channelId).then(channel => {
-                    if (channel && 'send' in channel) channel.send(`W00t <@${userId}>!`).catch(console.error);
+                    if (channel && 'send' in channel) {
+                        if (userId.startsWith("matrix:")) {
+                            const fullId = `@${userId.replace(/^matrix:/, "")}`;
+                            const shortHandle = database.read({ guildId: serverId as Snowflake, userId: fullId, property: "matrix_links_rev" });
+                            channel.send(`W00t ${shortHandle ?? fullId}!`).catch(console.error);
+                        } else if (userId.startsWith("webhook:")) {
+                            channel.send(`W00t ${userId.replace(/^webhook:/, "")}!`).catch(console.error);
+                        } else channel.send(`W00t <@${userId}>!`).catch(console.error);
+                    }
                 }).catch(() => { });
             } catch (_e) { /*  */ }
 

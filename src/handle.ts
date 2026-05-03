@@ -23,6 +23,29 @@ for (const { name: command } of Deno.readDirSync(path.join(import.meta.dirname ?
     commands.push((await import(path.join(import.meta.dirname ?? "", "./commands/", command))).default);
 }
 
+function escapeRegex(value: string) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function extractCommandContent(content: string, prefix: string) {
+    const trimmed = content.trim();
+
+    if (trimmed.startsWith(prefix)) {
+        return trimmed;
+    }
+
+    const escapedPrefix = escapeRegex(prefix);
+    const bridgedMatch = trimmed.match(new RegExp(`^(?:<@[^>\\s]+>\\s*)?.{1,200}:\\s*(${escapedPrefix}[a-z][^\\n]*)$`, "i"));
+    return bridgedMatch ? bridgedMatch[1].trim() : null;
+}
+
+function extractBridgeSender(content: string, prefix: string) {
+    const trimmed = content.trim();
+    const escapedPrefix = escapeRegex(prefix);
+    const bridgedMatch = trimmed.match(new RegExp(`^(?:<@[^>\\s]+>\\s*)?(.{1,200}):\\s*${escapedPrefix}[a-z][^\\n]*$`, "i"));
+    return bridgedMatch ? bridgedMatch[1].trim() : null;
+}
+
 
 export async function handleMessage(message: Message | PartialMessage, botPrefix: string | undefined, isEdit = false, reason?: string) {
     await membersFetch(message.guildId);
@@ -30,8 +53,37 @@ export async function handleMessage(message: Message | PartialMessage, botPrefix
     if (message.partial) {
         message = await message.fetch();
     }
-    if (!message.inGuild() || !message.guildId || message.author.bot || message.author.system) return;
-    if (!isEdit) updateRep(message.guildId, message.author.id, +1);
+
+    if (!message.inGuild() || !message.guildId || message.author.system) return;
+
+    const prefix = database.read({
+        guildId: message.guildId!,
+        property: "prefix",
+    }) ?? ",";
+
+    const bridgeDebug = (Deno.env.get("BRIDGE_DEBUG") ?? "").toLowerCase().match(/^(1|true|yes|on)$/);
+
+    const isWebhook = !!message.webhookId;
+    const bridgeSender = extractBridgeSender(message.content, prefix);
+    const commandContent = extractCommandContent(message.content, prefix);
+    const isWebhookCommand = isWebhook && commandContent !== null;
+
+    if (bridgeDebug && isWebhook) {
+        console.log("[bridge]", {
+            content: message.content,
+            webhookId: message.webhookId,
+            bridgeSender,
+            commandContent,
+            isWebhookCommand
+        });
+    }
+
+    if (message.author.bot && !isWebhookCommand) return;
+    if (isWebhookCommand) {
+        (message as Message & { bridgeSender?: string }).bridgeSender = bridgeSender ?? undefined;
+        message.content = commandContent!;
+    }
+    if (!isWebhook && !isEdit) updateRep(message.guildId, message.author.id, +1);
     if (isEdit) {
         handleDelete(message);
 
@@ -44,35 +96,32 @@ export async function handleMessage(message: Message | PartialMessage, botPrefix
         }) !== undefined) return;
     }
 
-    // streak update [first, last]
-    const streak = (database.read({
-        guildId: message.guildId,
-        userId: message.author.id,
-        property: "streak",
-    }) ?? "0-0").split("-").map(e => parseInt(e));
-    if (((+new Date()) - streak[1]) < 48 * 3600 * 1000) {
-        database.write({
+    if (!isWebhook) {
+        // streak update [first, last]
+        const streak = (database.read({
             guildId: message.guildId,
             userId: message.author.id,
             property: "streak",
-            value: `${streak[0]}-${+new Date()}`
-        });
-    } else {
-        database.write({
-            guildId: message.guildId,
-            userId: message.author.id,
-            property: "streak",
-            value: `${+new Date()}-${+new Date()}`
-        });
+        }) ?? "0-0").split("-").map(e => parseInt(e));
+        if (((+new Date()) - streak[1]) < 48 * 3600 * 1000) {
+            database.write({
+                guildId: message.guildId,
+                userId: message.author.id,
+                property: "streak",
+                value: `${streak[0]}-${+new Date()}`
+            });
+        } else {
+            database.write({
+                guildId: message.guildId,
+                userId: message.author.id,
+                property: "streak",
+                value: `${+new Date()}-${+new Date()}`
+            });
+        }
     }
 
-    const prefix = database.read({
-        guildId: message.guildId!,
-        property: "prefix",
-    });
-
     let prefixed = true;
-    if (!message.content.startsWith(prefix ?? ".")) {
+    if (!message.content.startsWith(prefix ?? ",")) {
         if (botPrefix !== undefined) if (message.content.startsWith(botPrefix)) message.content = message.content.substring(botPrefix.length + +(message.content[botPrefix.length] == " "));
         else prefixed = false; else prefixed = false;
     } else message.content = message.content.substring(1);
