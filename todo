@@ -1,3 +1,9 @@
+lapo:
+- lapo (within 15 minutes before midnight ig, because of discord api limits)
+- even if bot isn't in guild, in "private channels" (e.g. group dms) and servers bopper isn't member of (and show a "add Bopper" button)
+- lapo: show "sent at, received at" footnote
+- set timezone
+
 sed:
 - e.g. .s/something/something else
 - similar to discord's built in feature
@@ -17,3 +23,12 @@ add a simple (local, privacy preserving) embedding models to detect negative mes
 uptime
 
 reloading commands without restart
+
+what happens if you .help in a channel where the bot may read, but not send
+what happens if you add bot, without "bot" permissions?
+
+give rep, streak for non-ephemeral slash commands
+
+improve member cache (seperate the guild await and member fetch)
+
+rework bopper itself (e.g. mostly less manual database things)
