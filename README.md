@@ -37,17 +37,7 @@ Use `/help` or `<prefix>help` to get started (default prefix is `,`)
     deno run --env-file -A ./index.ts
     ```
 
-## Matrix bridge passthrough
-
-If your Matrix bridge posts into Discord via a webhook, commands can be forwarded using the garebot-compatible format:
-
-- `<display name>: ,command args`
-- optionally with a leading mention: `<@1234567890> display name: ,command args`
-
-Examples: `Alice: ,help` or `@alice:matrix.org: ,help`
-
-To debug bridge parsing, set `BRIDGE_DEBUG=1` in your `.env` and watch the console for `[bridge]` logs.
-
+Optional: set `AUTO_RELOAD=1` in `.env` to restart on file changes.
 ## Commands
 
 All commands (slash examples):
