@@ -17,14 +17,14 @@ a Discord bot to boost engagement, keeping the community active
 - lapo (last post of the day)
 - lapo leaderboard
 - ping (showing user latency and bot ping)
-- changing command prefix (`.` by default)
+- changing command prefix (`,` by default)
 - streak (send a message every day to keep up your streak)
 - streak leaderboard
 
 ## Inviting
 
 Add the bot to your own server by using [this link](https://discord.com/oauth2/authorize?client_id=1395103292899590337)  
-Use `/help` or `<prefix>help` to get started (default prefix is `.`)
+Use `/help` or `<prefix>help` to get started (default prefix is `,`)
 
 ## Running yourself
 
