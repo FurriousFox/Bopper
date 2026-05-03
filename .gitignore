@@ -5,3 +5,4 @@ bopper_dev.db
 bopper_dev_meta.db
 xkcd/typesense-data
 .env
+.vscode
